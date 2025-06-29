@@ -1688,22 +1688,225 @@ def manual_creation_page():
     st.markdown("## 📝 Manual Question Creation")
     st.write("Create questions manually by uploading or pasting syllabus")
     
+    # Initialize variables
+    content = ""
+    topics = []
+    syllabus_text = ""
+    
     tab1, tab2 = st.tabs(["📄 Upload Syllabus", "✏️ Paste Syllabus"])
     
     with tab1:
         uploaded_file = st.file_uploader("Choose a file", type=['txt', 'pdf', 'docx'])
         if uploaded_file is not None:
             st.success(f"✅ File uploaded: {uploaded_file.name}")
-            st.write("File content will be processed here...")
+            
+            # Process uploaded file
+            try:
+                if uploaded_file.type == "text/plain":
+                    # Process text file
+                    content = uploaded_file.read().decode('utf-8')
+                    st.write("**📖 Extracted Content:**")
+                    st.text_area("File Content", content, height=200, disabled=True)
+                    
+                    # Extract topics from content
+                    topics = extract_topics_from_content(content)
+                    st.write(f"**🎯 Extracted Topics:** {len(topics)} topics found")
+                    for topic in topics[:10]:  # Show first 10 topics
+                        st.write(f"• {topic}")
+                    if len(topics) > 10:
+                        st.write(f"*... and {len(topics) - 10} more topics*")
+                    
+                elif uploaded_file.type == "application/pdf":
+                    st.info("📄 PDF processing will be implemented soon. Please use text files for now.")
+                    content = ""
+                    topics = []
+                    
+                elif uploaded_file.type == "application/vnd.openxmlformats-officedocument.wordprocessingml.document":
+                    st.info("📄 DOCX processing will be implemented soon. Please use text files for now.")
+                    content = ""
+                    topics = []
+                    
+                else:
+                    st.error("❌ Unsupported file type. Please upload a .txt file.")
+                    content = ""
+                    topics = []
+                    
+            except Exception as e:
+                st.error(f"❌ Error processing file: {str(e)}")
+                content = ""
+                topics = []
     
     with tab2:
         syllabus_text = st.text_area("Paste your syllabus here:", height=200)
         if syllabus_text:
-            st.write("Syllabus content will be processed here...")
+            st.write("**📖 Syllabus Content:**")
+            st.write(syllabus_text)
+            
+            # Extract topics from pasted text
+            topics = extract_topics_from_content(syllabus_text)
+            st.write(f"**🎯 Extracted Topics:** {len(topics)} topics found")
+            for topic in topics[:10]:  # Show first 10 topics
+                st.write(f"• {topic}")
+            if len(topics) > 10:
+                st.write(f"*... and {len(topics) - 10} more topics*")
+    
+    # Question generation section (appears if content is available)
+    if content or syllabus_text:
+        st.markdown("---")
+        st.markdown("### 🚀 Generate Questions from Syllabus")
+        
+        # Get the content and topics
+        if content:
+            syllabus_content = content
+            syllabus_topics = topics
+        else:
+            syllabus_content = syllabus_text
+            syllabus_topics = topics
+        
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            num_questions = st.slider("📝 Number of Questions", 5, 50, 20)
+            subject_name = st.text_input("📚 Subject Name", placeholder="e.g., Database Management Systems")
+        
+        with col2:
+            question_types = st.multiselect(
+                "🎯 Question Types",
+                ["MCQ", "Short Answer", "Long Answer", "Case Study"],
+                default=["MCQ", "Short Answer"]
+            )
+            
+            # Show extracted topics
+            if syllabus_topics:
+                st.write(f"**📖 Available Topics:** {len(syllabus_topics)}")
+                topic_preview = ", ".join(syllabus_topics[:5])
+                st.write(f"*{topic_preview}...*")
+        
+        if st.button("🤖 Generate Questions from Syllabus", type="primary"):
+            if syllabus_topics and subject_name:
+                # Check if user is super admin
+                is_super_admin = (hasattr(st.session_state, 'current_user') and 
+                                st.session_state.current_user and 
+                                st.session_state.current_user.get('role') == 'super_admin')
+                
+                if is_super_admin:
+                    with st.spinner("🤖 AI is generating intelligent questions from syllabus using ChatGPT..."):
+                        # Generate questions using ChatGPT
+                        questions = st.session_state.questvibe_chatgpt.generate_questions(
+                            subject_name, syllabus_topics, num_questions, question_types
+                        )
+                else:
+                    with st.spinner("🤖 AI is generating intelligent questions from syllabus..."):
+                        # Generate questions using ChatGPT (with silent fallback)
+                        questions = st.session_state.questvibe_chatgpt.generate_questions(
+                            subject_name, syllabus_topics, num_questions, question_types
+                        )
+                
+                # Analyze question quality
+                analysis = st.session_state.questvibe_chatgpt.analyze_question_quality(questions)
+                
+                # Show success message
+                if is_super_admin:
+                    st.success(f"✅ Generated {len(questions)} intelligent questions from syllabus using ChatGPT!")
+                else:
+                    st.success(f"✅ Generated {len(questions)} intelligent questions from syllabus!")
+                
+                st.info(f"🤖 AI used {len(syllabus_topics)} topics from your syllabus")
+                
+                # Show quality analysis
+                col1, col2, col3, col4 = st.columns(4)
+                with col1:
+                    st.metric("Quality Score", f"{analysis['quality_score']}/100", "⭐")
+                with col2:
+                    st.metric("Topics Covered", len(analysis['topic_coverage']), "🎯")
+                with col3:
+                    st.metric("Question Types", len(analysis['type_distribution']), "📝")
+                with col4:
+                    st.metric("Difficulty Levels", len(analysis['difficulty_distribution']), "📊")
+                
+                # Log activity
+                if st.session_state.current_user:
+                    log_question_generation(
+                        st.session_state.current_user['id'],
+                        subject_name,
+                        num_questions,
+                        question_types
+                    )
+                    st.info(f"📊 Activity logged for {st.session_state.current_user['name']}")
+                
+                # Display questions
+                st.markdown("### 📋 Generated Questions from Syllabus")
+                
+                for i, q in enumerate(questions, 1):
+                    with st.expander(f"Question {i}: {q.get('type', 'Question')} - {q.get('difficulty', 'Medium')} Difficulty", expanded=True):
+                        st.markdown(f"**{q['question']}**")
+                        
+                        # Show question metadata
+                        col1, col2, col3 = st.columns(3)
+                        with col1:
+                            st.write(f"**Type:** {q.get('type', 'Unknown')}")
+                        with col2:
+                            st.write(f"**Difficulty:** {q.get('difficulty', 'Medium')}")
+                        with col3:
+                            st.write(f"**Bloom Level:** {q.get('bloom_level', 'Understand')}")
+                        
+                        # Show options for MCQ
+                        if q.get('type') == 'MCQ' and q.get('options'):
+                            st.write("**Options:**")
+                            for option in q['options']:
+                                st.write(f"   {option}")
+                            
+                            if q.get('correct_answer'):
+                                st.success(f"**Correct Answer:** {q.get('correct_answer')}")
+                        
+                        st.write(f"**Topic:** {q.get('topic', 'General')}")
+                        st.markdown("---")
+            else:
+                st.error("❌ Please provide syllabus content and subject name to generate questions.")
     
     if st.button("🔙 Back to Dashboard"):
         st.session_state.show_manual_creation = False
         st.rerun()
+
+def extract_topics_from_content(content: str) -> List[str]:
+    """Extract topics from syllabus content using AI processing"""
+    # Simple topic extraction (can be enhanced with NLP)
+    lines = content.split('\n')
+    topics = []
+    
+    for line in lines:
+        line = line.strip()
+        if line:
+            # Look for topic patterns
+            if any(keyword in line.lower() for keyword in ['topic', 'unit', 'chapter', 'section', 'module']):
+                # Extract topic name
+                topic = line.replace('Topic:', '').replace('Unit:', '').replace('Chapter:', '').replace('Section:', '').replace('Module:', '').strip()
+                if topic and len(topic) > 3:
+                    topics.append(topic)
+            elif line.startswith(('•', '-', '*', '1.', '2.', '3.', '4.', '5.')):
+                # Extract bullet points as topics
+                topic = line.replace('•', '').replace('-', '').replace('*', '').strip()
+                if topic and len(topic) > 3:
+                    topics.append(topic)
+            elif len(line) > 10 and len(line) < 100:  # Potential topic length
+                # Check if line looks like a topic
+                if not line.endswith('.') and not line.startswith(('The', 'This', 'In', 'For', 'With')):
+                    topics.append(line)
+    
+    # Remove duplicates and clean up
+    topics = list(set(topics))
+    topics = [topic for topic in topics if len(topic) > 3 and len(topic) < 100]
+    
+    # If no topics found, create some from content
+    if not topics:
+        words = content.split()
+        # Extract potential topics from content
+        for i in range(0, len(words), 10):
+            if i + 5 < len(words):
+                topic = ' '.join(words[i:i+5])
+                topics.append(topic)
+    
+    return topics[:20]  # Limit to 20 topics
 
 def pattern_analysis_page():
     st.markdown("## 📊 Pattern Analysis")
