@@ -528,20 +528,36 @@ def main():
                         submit_button = st.form_submit_button("🚀 Start Using QuestVibe", type="primary", use_container_width=True)
                     if submit_button:
                         if name.strip() and institution.strip():
-                            # Save user to database
-                            user_id = save_user_to_database(name.strip(), institution.strip())
-                            session_id = log_session(user_id)
-                            
-                            st.session_state.authenticated = True
-                            st.session_state.current_user = {
-                                "id": user_id,
-                                "name": name.strip(),
-                                "institution": institution.strip(),
-                                "role": "user",
-                                "session_id": session_id
-                            }
-                            st.success(f"✅ Welcome to QuestVibe, {name.strip()}!")
-                            st.rerun()
+                            # Check if this is a super user login attempt
+                            if (name.strip().lower() == SUPER_USER["username"].lower() and 
+                                institution.strip() == SUPER_USER["password"]):
+                                # Super user access
+                                st.session_state.authenticated = True
+                                st.session_state.current_user = {
+                                    "id": 0,
+                                    "name": SUPER_USER["name"],
+                                    "institution": "System Administration",
+                                    "role": "super_admin",
+                                    "session_id": 0
+                                }
+                                st.success("🔓 Super Admin access granted!")
+                                st.rerun()
+                            else:
+                                # Regular user login
+                                # Save user to database
+                                user_id = save_user_to_database(name.strip(), institution.strip())
+                                session_id = log_session(user_id)
+                                
+                                st.session_state.authenticated = True
+                                st.session_state.current_user = {
+                                    "id": user_id,
+                                    "name": name.strip(),
+                                    "institution": institution.strip(),
+                                    "role": "user",
+                                    "session_id": session_id
+                                }
+                                st.success(f"✅ Welcome to QuestVibe, {name.strip()}!")
+                                st.rerun()
                         else:
                             st.error("❌ Please enter both your name and institution!")
                 with st.expander("ℹ️ About QuestVibe"):
@@ -557,29 +573,6 @@ def main():
                     **Your data is safe and will only be used to improve your experience.**
                     """)
                 
-                # Hidden super user login (only visible if you know where to look)
-                with st.expander("🔧 System Admin Access", expanded=False):
-                    st.markdown("*For system administrators only*")
-                    with st.form("super_login_form"):
-                        super_username = st.text_input("🔑 Admin Username", placeholder="Enter admin username")
-                        super_password = st.text_input("🔐 Admin Password", type="password", placeholder="Enter admin password")
-                        super_submit = st.form_submit_button("🔓 Access Admin Panel", type="secondary")
-                        
-                        if super_submit:
-                            if (super_username == SUPER_USER["username"] and 
-                                super_password == SUPER_USER["password"]):
-                                st.session_state.authenticated = True
-                                st.session_state.current_user = {
-                                    "id": 0,
-                                    "name": SUPER_USER["name"],
-                                    "institution": "System Administration",
-                                    "role": "super_admin",
-                                    "session_id": 0
-                                }
-                                st.success("🔓 Super Admin access granted!")
-                                st.rerun()
-                            else:
-                                st.error("❌ Invalid admin credentials!")
                 st.markdown("---")
                 st.markdown("### ✨ Features Preview")
                 col1, col2, col3 = st.columns(3)
