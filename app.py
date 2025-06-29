@@ -16,6 +16,28 @@ st.set_page_config(
 # Custom CSS for enhanced styling
 st.markdown("""
 <style>
+/* Main background styling */
+.main {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+}
+
+/* Background for the entire app */
+.stApp {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+    background-attachment: fixed;
+}
+
+/* Container background with glass effect */
+.main .block-container {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    border-radius: 20px;
+    padding: 2rem;
+    margin: 1rem;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
 h1 {
     background: linear-gradient(45deg, #FF6B6B, #4ECDC4, #45B7D1, #96CEB4);
     background-size: 300% 300%;
@@ -27,6 +49,7 @@ h1 {
     font-size: 3.5rem !important;
     font-weight: 800 !important;
     margin-bottom: 2rem !important;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
 }
 
 @keyframes gradient {
@@ -66,6 +89,7 @@ div[data-testid="column"] {
     box-shadow: 0 8px 32px rgba(0,0,0,0.1) !important;
     border: 1px solid rgba(255, 255, 255, 0.2) !important;
     transition: all 0.3s ease !important;
+    backdrop-filter: blur(10px) !important;
 }
 
 div[data-testid="column"]:hover {
@@ -91,6 +115,33 @@ div[data-testid="metric-container"] {
     border-radius: 20px !important;
     margin-top: 3rem !important;
     box-shadow: 0 8px 32px rgba(0,0,0,0.1) !important;
+}
+
+/* Text color adjustments for better readability */
+p, h2, h3, h4, h5, h6 {
+    color: #2c3e50 !important;
+}
+
+/* Streamlit elements background */
+.stTextInput > div > div > input {
+    background: rgba(255, 255, 255, 0.9) !important;
+    border-radius: 10px !important;
+}
+
+.stSelectbox > div > div > div {
+    background: rgba(255, 255, 255, 0.9) !important;
+    border-radius: 10px !important;
+}
+
+.stSlider > div > div > div > div {
+    background: rgba(255, 255, 255, 0.9) !important;
+}
+
+/* Success and info boxes */
+.stAlert {
+    background: rgba(255, 255, 255, 0.95) !important;
+    border-radius: 15px !important;
+    backdrop-filter: blur(10px) !important;
 }
 </style>
 """, unsafe_allow_html=True)
