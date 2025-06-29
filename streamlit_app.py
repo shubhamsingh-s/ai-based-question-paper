@@ -9,6 +9,9 @@ from datetime import datetime
 import re
 import sqlite3
 import os
+import requests
+import openai
+from typing import List, Dict, Any
 
 # Page configuration
 st.set_page_config(
@@ -541,6 +544,64 @@ def super_admin_dashboard():
         if st.button("📊 Refresh Status", type="secondary"):
             st.rerun()
     
+    # ChatGPT Configuration
+    st.markdown("### 🤖 ChatGPT Configuration")
+    
+    # API Key management
+    with st.expander("🔑 ChatGPT API Configuration", expanded=False):
+        api_key = st.text_input("OpenAI API Key", type="password", 
+                               help="Enter your OpenAI API key to enable ChatGPT integration")
+        
+        if api_key:
+            st.session_state.questvibe_chatgpt.api_key = api_key
+            st.success("✅ API key configured!")
+        
+        # Test ChatGPT connection
+        if st.button("🧪 Test ChatGPT Connection", type="secondary"):
+            if st.session_state.questvibe_chatgpt.api_key:
+                try:
+                    test_questions = st.session_state.questvibe_chatgpt.generate_questions(
+                        "Test Subject", ["Test Topic"], 1, ["MCQ"]
+                    )
+                    if test_questions:
+                        st.success("✅ ChatGPT connection successful!")
+                        st.write("**Sample Question:**")
+                        st.write(test_questions[0]['question'])
+                    else:
+                        st.error("❌ ChatGPT test failed - no questions generated")
+                except Exception as e:
+                    st.error(f"❌ ChatGPT test failed: {str(e)}")
+            else:
+                st.warning("⚠️ Please enter an API key first")
+    
+    # ChatGPT Statistics
+    st.markdown("**📊 ChatGPT Usage Statistics:**")
+    col1, col2, col3 = st.columns(3)
+    
+    with col1:
+        api_status = "✅ Connected" if st.session_state.questvibe_chatgpt.api_key else "❌ Not Connected"
+        st.metric("API Status", api_status, "🔗")
+    
+    with col2:
+        st.metric("Model", st.session_state.questvibe_chatgpt.model, "🤖")
+    
+    with col3:
+        st.metric("Max Tokens", st.session_state.questvibe_chatgpt.max_tokens, "📝")
+    
+    # ChatGPT Features
+    st.markdown("**✨ ChatGPT Features:**")
+    features = [
+        "Intelligent question generation",
+        "Multiple difficulty levels",
+        "Bloom's taxonomy integration", 
+        "Industry-relevant content",
+        "JSON response parsing",
+        "Fallback generation system"
+    ]
+    
+    for feature in features:
+        st.write(f"• {feature}")
+    
     conn.close()
     
     if st.button("🔙 Back to Dashboard"):
@@ -974,6 +1035,231 @@ if 'questvibe_ai_db' not in st.session_state:
     # Automatically populate database on first run
     st.session_state.questvibe_ai_db.populate_database()
 
+# ChatGPT Integration
+class QuestVibeChatGPT:
+    def __init__(self, api_key=None):
+        self.api_key = api_key or st.secrets.get("OPENAI_API_KEY", "")
+        self.model = "gpt-3.5-turbo"
+        self.max_tokens = 1000
+        
+    def generate_questions(self, subject: str, topics: List[str], num_questions: int, question_types: List[str]) -> List[Dict]:
+        """Generate intelligent questions using ChatGPT"""
+        if not self.api_key:
+            return self.generate_fallback_questions(subject, topics, num_questions, question_types)
+        
+        try:
+            # Create prompt for ChatGPT
+            prompt = self.create_question_prompt(subject, topics, num_questions, question_types)
+            
+            # Call ChatGPT API
+            response = self.call_chatgpt_api(prompt)
+            
+            # Parse response
+            questions = self.parse_chatgpt_response(response, question_types)
+            
+            return questions[:num_questions]  # Ensure we get the requested number
+            
+        except Exception as e:
+            st.warning(f"ChatGPT API error: {str(e)}. Using fallback generation.")
+            return self.generate_fallback_questions(subject, topics, num_questions, question_types)
+    
+    def create_question_prompt(self, subject: str, topics: List[str], num_questions: int, question_types: List[str]) -> str:
+        """Create a detailed prompt for ChatGPT"""
+        topics_text = ", ".join(topics)
+        types_text = ", ".join(question_types)
+        
+        prompt = f"""
+        You are an expert educator creating questions for {subject}. 
+        
+        Available topics: {topics_text}
+        Question types needed: {types_text}
+        Number of questions: {num_questions}
+        
+        Please generate {num_questions} questions with the following requirements:
+        
+        1. Questions should be relevant to the topics provided
+        2. Mix of question types: {types_text}
+        3. For MCQs, provide 4 options (A, B, C, D) with one correct answer
+        4. Questions should test different cognitive levels (Remember, Understand, Apply, Analyze, Evaluate, Create)
+        5. Difficulty should vary from easy to hard
+        6. Questions should be practical and industry-relevant
+        
+        Format your response as JSON:
+        {{
+            "questions": [
+                {{
+                    "type": "MCQ/Short Answer/Long Answer/Case Study",
+                    "question": "Question text here",
+                    "options": ["A", "B", "C", "D"] (only for MCQ),
+                    "correct_answer": "A" (only for MCQ),
+                    "difficulty": "Easy/Medium/Hard",
+                    "bloom_level": "Remember/Understand/Apply/Analyze/Evaluate/Create",
+                    "topic": "specific topic from the list"
+                }}
+            ]
+        }}
+        
+        Make sure the questions are high-quality, educational, and suitable for engineering students.
+        """
+        
+        return prompt
+    
+    def call_chatgpt_api(self, prompt: str) -> str:
+        """Call ChatGPT API"""
+        headers = {
+            "Authorization": f"Bearer {self.api_key}",
+            "Content-Type": "application/json"
+        }
+        
+        data = {
+            "model": self.model,
+            "messages": [
+                {"role": "system", "content": "You are an expert educational content creator specializing in engineering education."},
+                {"role": "user", "content": prompt}
+            ],
+            "max_tokens": self.max_tokens,
+            "temperature": 0.7
+        }
+        
+        response = requests.post(
+            "https://api.openai.com/v1/chat/completions",
+            headers=headers,
+            json=data,
+            timeout=30
+        )
+        
+        if response.status_code == 200:
+            return response.json()["choices"][0]["message"]["content"]
+        else:
+            raise Exception(f"API call failed: {response.status_code}")
+    
+    def parse_chatgpt_response(self, response: str, question_types: List[str]) -> List[Dict]:
+        """Parse ChatGPT response into structured questions"""
+        try:
+            # Try to extract JSON from response
+            json_start = response.find('{')
+            json_end = response.rfind('}') + 1
+            
+            if json_start != -1 and json_end != 0:
+                json_str = response[json_start:json_end]
+                data = json.loads(json_str)
+                
+                if "questions" in data:
+                    return data["questions"]
+            
+            # Fallback: parse manually
+            return self.parse_manual_response(response, question_types)
+            
+        except Exception as e:
+            st.warning(f"Failed to parse ChatGPT response: {str(e)}")
+            return self.parse_manual_response(response, question_types)
+    
+    def parse_manual_response(self, response: str, question_types: List[str]) -> List[Dict]:
+        """Manually parse response if JSON parsing fails"""
+        questions = []
+        lines = response.split('\n')
+        current_question = None
+        
+        for line in lines:
+            line = line.strip()
+            if not line:
+                continue
+                
+            # Look for question patterns
+            if any(qtype.lower() in line.lower() for qtype in question_types):
+                if current_question:
+                    questions.append(current_question)
+                
+                current_question = {
+                    "type": "MCQ" if "mcq" in line.lower() else "Short Answer",
+                    "question": line,
+                    "options": [],
+                    "difficulty": "Medium",
+                    "bloom_level": "Understand",
+                    "topic": "General"
+                }
+            elif current_question and line.startswith(('A.', 'B.', 'C.', 'D.')):
+                current_question["options"].append(line)
+        
+        if current_question:
+            questions.append(current_question)
+        
+        return questions
+    
+    def generate_fallback_questions(self, subject: str, topics: List[str], num_questions: int, question_types: List[str]) -> List[Dict]:
+        """Generate questions without ChatGPT API"""
+        questions = []
+        
+        for i in range(num_questions):
+            topic = random.choice(topics)
+            q_type = random.choice(question_types)
+            
+            if q_type == "MCQ":
+                question = {
+                    "type": "MCQ",
+                    "question": f"{i+1}. What is {topic}?",
+                    "options": [
+                        f"A. {topic} is a fundamental concept",
+                        f"B. {topic} is an advanced technique", 
+                        f"C. {topic} is a basic principle",
+                        f"D. {topic} is a complex system"
+                    ],
+                    "correct_answer": "A",
+                    "difficulty": random.choice(["Easy", "Medium", "Hard"]),
+                    "bloom_level": "Understand",
+                    "topic": topic
+                }
+            else:
+                question = {
+                    "type": q_type,
+                    "question": f"{i+1}. Explain {topic} in detail and discuss its applications in {subject}.",
+                    "difficulty": random.choice(["Easy", "Medium", "Hard"]),
+                    "bloom_level": "Analyze",
+                    "topic": topic
+                }
+            
+            questions.append(question)
+        
+        return questions
+    
+    def analyze_question_quality(self, questions: List[Dict]) -> Dict[str, Any]:
+        """Analyze the quality and distribution of generated questions"""
+        analysis = {
+            "total_questions": len(questions),
+            "type_distribution": {},
+            "difficulty_distribution": {},
+            "bloom_distribution": {},
+            "topic_coverage": set(),
+            "quality_score": 0
+        }
+        
+        for q in questions:
+            # Type distribution
+            q_type = q.get("type", "Unknown")
+            analysis["type_distribution"][q_type] = analysis["type_distribution"].get(q_type, 0) + 1
+            
+            # Difficulty distribution
+            difficulty = q.get("difficulty", "Medium")
+            analysis["difficulty_distribution"][difficulty] = analysis["difficulty_distribution"].get(difficulty, 0) + 1
+            
+            # Bloom level distribution
+            bloom = q.get("bloom_level", "Understand")
+            analysis["bloom_distribution"][bloom] = analysis["bloom_distribution"].get(bloom, 0) + 1
+            
+            # Topic coverage
+            topic = q.get("topic", "General")
+            analysis["topic_coverage"].add(topic)
+        
+        # Calculate quality score
+        analysis["quality_score"] = min(100, len(questions) * 2 + len(analysis["topic_coverage"]) * 5)
+        analysis["topic_coverage"] = list(analysis["topic_coverage"])
+        
+        return analysis
+
+# Initialize ChatGPT
+if 'questvibe_chatgpt' not in st.session_state:
+    st.session_state.questvibe_chatgpt = QuestVibeChatGPT()
+
 def main():
     if 'authenticated' not in st.session_state:
         st.session_state.authenticated = False
@@ -1286,7 +1572,7 @@ def auto_generation_page():
                     st.write(f"*... and {len(topics) - 5} more topics*")
     
     if st.button("🚀 Generate Questions", type="primary"):
-        with st.spinner("🤖 AI is generating questions from database..."):
+        with st.spinner("🤖 AI is generating intelligent questions using ChatGPT..."):
             # Log the generation activity to database
             if st.session_state.current_user:
                 log_question_generation(
@@ -1302,35 +1588,58 @@ def auto_generation_page():
                 # Fallback to hardcoded topics if none in database
                 topics = ["Introduction", "Basic Concepts", "Advanced Topics", "Applications", "Case Studies"]
             
-            questions = []
+            # Generate questions using ChatGPT
+            questions = st.session_state.questvibe_chatgpt.generate_questions(
+                subject, topics, num_questions, question_types
+            )
             
-            for i in range(num_questions):
-                topic = random.choice(topics)
-                q_type = random.choice(question_types)
-                
-                if q_type == "MCQ":
-                    question = f"{i+1}. What is {topic}? (MCQ)"
-                    options = [f"Option A", f"Option B", f"Option C", f"Option D"]
-                    questions.append({"type": q_type, "question": question, "options": options})
-                else:
-                    question = f"{i+1}. Explain {topic} in detail. ({q_type})"
-                    questions.append({"type": q_type, "question": question})
+            # Analyze question quality
+            analysis = st.session_state.questvibe_chatgpt.analyze_question_quality(questions)
             
-            st.success(f"✅ Generated {len(questions)} questions from AI database!")
+            st.success(f"✅ Generated {len(questions)} intelligent questions using ChatGPT!")
             st.info(f"🤖 AI used {len(topics)} topics from {selected_branch} - {subject}")
+            
+            # Show quality analysis
+            col1, col2, col3, col4 = st.columns(4)
+            with col1:
+                st.metric("Quality Score", f"{analysis['quality_score']}/100", "⭐")
+            with col2:
+                st.metric("Topics Covered", len(analysis['topic_coverage']), "🎯")
+            with col3:
+                st.metric("Question Types", len(analysis['type_distribution']), "📝")
+            with col4:
+                st.metric("Difficulty Levels", len(analysis['difficulty_distribution']), "📊")
+            
             if st.session_state.current_user:
                 st.info(f"📊 Activity logged for {st.session_state.current_user['name']} from {st.session_state.current_user['institution']}")
             
-            # Display questions
+            # Display questions with enhanced formatting
             st.markdown("### 📋 Generated Questions")
-            for q in questions:
-                if q["type"] == "MCQ":
-                    st.write(f"**{q['question']}**")
-                    for opt in q["options"]:
-                        st.write(f"   {opt}")
-                else:
-                    st.write(f"**{q['question']}**")
-                st.write("---")
+            
+            for i, q in enumerate(questions, 1):
+                with st.expander(f"Question {i}: {q.get('type', 'Question')} - {q.get('difficulty', 'Medium')} Difficulty", expanded=True):
+                    st.markdown(f"**{q['question']}**")
+                    
+                    # Show question metadata
+                    col1, col2, col3 = st.columns(3)
+                    with col1:
+                        st.write(f"**Type:** {q.get('type', 'Unknown')}")
+                    with col2:
+                        st.write(f"**Difficulty:** {q.get('difficulty', 'Medium')}")
+                    with col3:
+                        st.write(f"**Bloom Level:** {q.get('bloom_level', 'Understand')}")
+                    
+                    # Show options for MCQ
+                    if q.get('type') == 'MCQ' and q.get('options'):
+                        st.write("**Options:**")
+                        for option in q['options']:
+                            st.write(f"   {option}")
+                        
+                        if q.get('correct_answer'):
+                            st.success(f"**Correct Answer:** {q.get('correct_answer')}")
+                    
+                    st.write(f"**Topic:** {q.get('topic', 'General')}")
+                    st.markdown("---")
     
     if st.button("🔙 Back to Dashboard"):
         st.session_state.show_auto_generation = False

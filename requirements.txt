@@ -40,4 +40,7 @@ black>=22.0.0
 flake8>=5.0.0
 
 # Added from the code block
-pillow>=9.5.0 
+pillow>=9.5.0
+
+# Added from the code block
+openai>=1.0.0 
