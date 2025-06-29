@@ -413,6 +413,70 @@ def analyze_patterns(subject):
         'total_questions': len(all_questions)
     }
 
+def parse_uploaded_question_paper(file_content):
+    """Parse uploaded question paper and extract question data"""
+    try:
+        # Try to parse as JSON first
+        if isinstance(file_content, str):
+            data = json.loads(file_content)
+            return data
+    except:
+        pass
+    
+    # If not JSON, try to parse as text
+    if isinstance(file_content, str):
+        lines = file_content.split('\n')
+        questions = []
+        current_question = None
+        
+        for line in lines:
+            line = line.strip()
+            if not line:
+                continue
+            
+            # Look for question patterns
+            question_match = re.match(r'Q(\d+)[:\s]+(.+)', line, re.IGNORECASE)
+            if question_match:
+                if current_question:
+                    questions.append(current_question)
+                
+                question_text = question_match.group(2)
+                current_question = {
+                    'question': question_text,
+                    'type': 'Unknown',
+                    'topic': 'Unknown',
+                    'marks': 5,
+                    'bloom': 'Understand'
+                }
+            else:
+                # Look for metadata in the line
+                if current_question:
+                    if 'marks' in line.lower() or '(' in line and ')' in line:
+                        # Extract marks from parentheses
+                        marks_match = re.search(r'\((\d+)\s*marks?\)', line, re.IGNORECASE)
+                        if marks_match:
+                            current_question['marks'] = int(marks_match.group(1))
+                    
+                    if 'mcq' in line.lower():
+                        current_question['type'] = 'MCQ'
+                    elif 'short' in line.lower():
+                        current_question['type'] = 'Short Answer'
+                    elif 'long' in line.lower():
+                        current_question['type'] = 'Long Answer'
+                    elif 'case' in line.lower():
+                        current_question['type'] = 'Case Study'
+        
+        if current_question:
+            questions.append(current_question)
+        
+        return {
+            'questions': questions,
+            'year': 'Custom',
+            'subject': 'Custom Subject'
+        }
+    
+    return None
+
 def manual_creation_page():
     st.markdown("## 📝 Manual Question Creation")
     st.markdown("---")
@@ -567,109 +631,292 @@ def pattern_analysis_page():
     st.markdown("## 📊 Pattern Analysis")
     st.markdown("---")
     
-    col1, col2 = st.columns(2)
+    # Add tabs for different analysis options
+    tab1, tab2 = st.tabs(["📚 Sample Papers Analysis", "📄 Upload Custom Papers"])
     
-    with col1:
-        st.markdown("### 📚 Select Subject for Analysis")
-        subject = st.selectbox(
-            "Choose subject to analyze patterns",
-            list(SAMPLE_PAST_PAPERS.keys()),
-            index=0
-        )
+    with tab1:
+        st.markdown("### 📚 Analyze Sample Past Papers")
+        col1, col2 = st.columns(2)
         
-        if subject:
-            patterns = analyze_patterns(subject)
+        with col1:
+            st.markdown("### 📚 Select Subject for Analysis")
+            subject = st.selectbox(
+                "Choose subject to analyze patterns",
+                list(SAMPLE_PAST_PAPERS.keys()),
+                index=0,
+                key="sample_subject"
+            )
             
-            if patterns:
-                st.markdown("### 📈 Analysis Summary")
-                col_a, col_b = st.columns(2)
-                with col_a:
-                    st.metric("Total Papers", patterns.get('total_papers', 0))
-                    st.metric("Total Questions", patterns.get('total_questions', 0))
-                with col_b:
-                    st.metric("Question Types", len(patterns.get('type_distribution', {})))
-                    st.metric("Bloom's Levels", len(patterns.get('bloom_distribution', {})))
+            if subject:
+                patterns = analyze_patterns(subject)
+                
+                if patterns:
+                    st.markdown("### 📈 Analysis Summary")
+                    col_a, col_b = st.columns(2)
+                    with col_a:
+                        st.metric("Total Papers", patterns.get('total_papers', 0))
+                        st.metric("Total Questions", patterns.get('total_questions', 0))
+                    with col_b:
+                        st.metric("Question Types", len(patterns.get('type_distribution', {})))
+                        st.metric("Bloom's Levels", len(patterns.get('bloom_distribution', {})))
+        
+        with col2:
+            st.markdown("### 📋 Sample Past Papers")
+            papers = SAMPLE_PAST_PAPERS.get(subject, [])
+            if papers:
+                for paper in papers:
+                    with st.expander(f"📄 {subject} - {paper['year']}"):
+                        for i, q in enumerate(paper['questions'], 1):
+                            st.write(f"Q{i}: {q['type']} - {q['topic']} ({q['marks']} marks, {q['bloom']})")
+            else:
+                st.info("No past papers available for this subject.")
+        
+        if patterns:
+            st.markdown("### 📊 Detailed Pattern Analysis")
+            
+            col1, col2 = st.columns(2)
+            
+            with col1:
+                # Question Type Distribution
+                if patterns.get('type_distribution'):
+                    type_df = pd.DataFrame([
+                        {'Type': k, 'Count': v} for k, v in patterns['type_distribution'].items()
+                    ])
+                    fig1 = px.pie(type_df, values='Count', names='Type', title='Question Type Pattern')
+                    st.plotly_chart(fig1, use_container_width=True)
+                
+                # Bloom's Taxonomy Distribution
+                if patterns.get('bloom_distribution'):
+                    bloom_df = pd.DataFrame([
+                        {'Level': k, 'Count': v} for k, v in patterns['bloom_distribution'].items()
+                    ])
+                    fig3 = px.bar(bloom_df, x='Level', y='Count', title="Bloom's Taxonomy Pattern")
+                    st.plotly_chart(fig3, use_container_width=True)
+            
+            with col2:
+                # Topic Frequency
+                if patterns.get('topic_frequency'):
+                    topic_df = pd.DataFrame([
+                        {'Topic': k, 'Frequency': v} for k, v in patterns['topic_frequency'].items()
+                    ])
+                    fig2 = px.bar(topic_df, x='Topic', y='Frequency', title='Topic Frequency Pattern')
+                    fig2.update_xaxes(tickangle=45)
+                    st.plotly_chart(fig2, use_container_width=True)
+                
+                # Marks Distribution
+                if patterns.get('marks_distribution'):
+                    marks_df = pd.DataFrame([
+                        {'Marks': k, 'Count': v} for k, v in patterns['marks_distribution'].items()
+                    ])
+                    fig4 = px.bar(marks_df, x='Marks', y='Count', title='Marks Distribution Pattern')
+                    st.plotly_chart(fig4, use_container_width=True)
+            
+            st.markdown("### 💡 Pattern Insights")
+            insights = []
+            
+            if patterns.get('type_distribution'):
+                most_common_type = max(patterns['type_distribution'], key=patterns['type_distribution'].get)
+                insights.append(f"**Most common question type:** {most_common_type}")
+            
+            if patterns.get('bloom_distribution'):
+                most_common_bloom = max(patterns['bloom_distribution'], key=patterns['bloom_distribution'].get)
+                insights.append(f"**Most common Bloom's level:** {most_common_bloom}")
+            
+            if patterns.get('topic_frequency'):
+                most_common_topic = max(patterns['topic_frequency'], key=patterns['topic_frequency'].get)
+                insights.append(f"**Most frequently tested topic:** {most_common_topic}")
+            
+            for insight in insights:
+                st.write(f"• {insight}")
+            
+            st.markdown("### 🎯 Recommended Question Distribution")
+            if patterns.get('type_distribution') and patterns.get('total_questions'):
+                total_q = patterns['total_questions']
+                recommendations = []
+                
+                for qtype, count in patterns['type_distribution'].items():
+                    percentage = (count / total_q) * 100
+                    recommendations.append(f"**{qtype}:** {percentage:.1f}% ({count}/{total_q} questions)")
+                
+                for rec in recommendations:
+                    st.write(f"• {rec}")
     
-    with col2:
-        st.markdown("### 📋 Sample Past Papers")
-        papers = SAMPLE_PAST_PAPERS.get(subject, [])
-        if papers:
-            for paper in papers:
-                with st.expander(f"📄 {subject} - {paper['year']}"):
-                    for i, q in enumerate(paper['questions'], 1):
-                        st.write(f"Q{i}: {q['type']} - {q['topic']} ({q['marks']} marks, {q['bloom']})")
-        else:
-            st.info("No past papers available for this subject.")
-    
-    if patterns:
-        st.markdown("### 📊 Detailed Pattern Analysis")
+    with tab2:
+        st.markdown("### 📄 Upload Custom Question Papers")
         
         col1, col2 = st.columns(2)
         
         with col1:
-            # Question Type Distribution
-            if patterns.get('type_distribution'):
-                type_df = pd.DataFrame([
-                    {'Type': k, 'Count': v} for k, v in patterns['type_distribution'].items()
-                ])
-                fig1 = px.pie(type_df, values='Count', names='Type', title='Question Type Pattern')
-                st.plotly_chart(fig1, use_container_width=True)
+            st.markdown("#### 📁 Upload Question Paper")
+            uploaded_paper = st.file_uploader(
+                "Upload your question paper (JSON, TXT)",
+                type=['json', 'txt'],
+                key="paper_upload"
+            )
             
-            # Bloom's Taxonomy Distribution
-            if patterns.get('bloom_distribution'):
-                bloom_df = pd.DataFrame([
-                    {'Level': k, 'Count': v} for k, v in patterns['bloom_distribution'].items()
-                ])
-                fig3 = px.bar(bloom_df, x='Level', y='Count', title="Bloom's Taxonomy Pattern")
-                st.plotly_chart(fig3, use_container_width=True)
+            if uploaded_paper is not None:
+                st.success(f"✅ File uploaded: {uploaded_paper.name}")
+                
+                # Read file content
+                try:
+                    if uploaded_paper.name.endswith('.json'):
+                        content = json.load(uploaded_paper)
+                    else:
+                        content = uploaded_paper.read().decode('utf-8')
+                    
+                    # Parse the content
+                    parsed_data = parse_uploaded_question_paper(content)
+                    
+                    if parsed_data and parsed_data.get('questions'):
+                        st.session_state.custom_paper = parsed_data
+                        st.success(f"✅ Successfully parsed {len(parsed_data['questions'])} questions!")
+                    else:
+                        st.error("❌ Could not parse questions from the uploaded file.")
+                        
+                except Exception as e:
+                    st.error(f"❌ Error reading file: {str(e)}")
         
         with col2:
-            # Topic Frequency
-            if patterns.get('topic_frequency'):
-                topic_df = pd.DataFrame([
-                    {'Topic': k, 'Frequency': v} for k, v in patterns['topic_frequency'].items()
-                ])
-                fig2 = px.bar(topic_df, x='Topic', y='Frequency', title='Topic Frequency Pattern')
-                fig2.update_xaxes(tickangle=45)
-                st.plotly_chart(fig2, use_container_width=True)
+            st.markdown("#### 📝 Paste Question Paper")
+            pasted_paper = st.text_area(
+                "Or paste your question paper content here",
+                height=200,
+                placeholder="Paste your question paper content here...\n\nExample format:\nQ1: What is database normalization? (5 marks)\nQ2: Explain SQL joins with examples. (8 marks)"
+            )
             
-            # Marks Distribution
-            if patterns.get('marks_distribution'):
-                marks_df = pd.DataFrame([
-                    {'Marks': k, 'Count': v} for k, v in patterns['marks_distribution'].items()
-                ])
-                fig4 = px.bar(marks_df, x='Marks', y='Count', title='Marks Distribution Pattern')
-                st.plotly_chart(fig4, use_container_width=True)
+            if pasted_paper and st.button("📊 Analyze Pasted Paper"):
+                parsed_data = parse_uploaded_question_paper(pasted_paper)
+                if parsed_data and parsed_data.get('questions'):
+                    st.session_state.custom_paper = parsed_data
+                    st.success(f"✅ Successfully parsed {len(parsed_data['questions'])} questions!")
+                else:
+                    st.error("❌ Could not parse questions from the pasted content.")
         
-        st.markdown("### 💡 Pattern Insights")
-        insights = []
-        
-        if patterns.get('type_distribution'):
-            most_common_type = max(patterns['type_distribution'], key=patterns['type_distribution'].get)
-            insights.append(f"**Most common question type:** {most_common_type}")
-        
-        if patterns.get('bloom_distribution'):
-            most_common_bloom = max(patterns['bloom_distribution'], key=patterns['bloom_distribution'].get)
-            insights.append(f"**Most common Bloom's level:** {most_common_bloom}")
-        
-        if patterns.get('topic_frequency'):
-            most_common_topic = max(patterns['topic_frequency'], key=patterns['topic_frequency'].get)
-            insights.append(f"**Most frequently tested topic:** {most_common_topic}")
-        
-        for insight in insights:
-            st.write(f"• {insight}")
-        
-        st.markdown("### 🎯 Recommended Question Distribution")
-        if patterns.get('type_distribution') and patterns.get('total_questions'):
-            total_q = patterns['total_questions']
-            recommendations = []
+        # Analyze custom paper if available
+        if hasattr(st.session_state, 'custom_paper') and st.session_state.custom_paper:
+            custom_paper = st.session_state.custom_paper
             
-            for qtype, count in patterns['type_distribution'].items():
-                percentage = (count / total_q) * 100
-                recommendations.append(f"**{qtype}:** {percentage:.1f}% ({count}/{total_q} questions)")
+            st.markdown("### 📊 Custom Paper Analysis")
             
-            for rec in recommendations:
-                st.write(f"• {rec}")
+            # Get subject name
+            subject_name = st.text_input(
+                "Subject Name", 
+                value=custom_paper.get('subject', 'Custom Subject'),
+                help="Enter the subject name for better analysis"
+            )
+            
+            if st.button("🔍 Analyze Custom Paper"):
+                # Analyze the custom paper
+                questions = custom_paper['questions']
+                
+                # Count patterns
+                type_counts = {}
+                bloom_counts = {}
+                marks_counts = {}
+                topic_counts = {}
+                total_marks = 0
+                
+                for q in questions:
+                    qtype = q.get('type', 'Unknown')
+                    bloom = q.get('bloom', 'Understand')
+                    marks = q.get('marks', 5)
+                    topic = q.get('topic', 'Unknown')
+                    
+                    type_counts[qtype] = type_counts.get(qtype, 0) + 1
+                    bloom_counts[bloom] = bloom_counts.get(bloom, 0) + 1
+                    marks_counts[marks] = marks_counts.get(marks, 0) + 1
+                    topic_counts[topic] = topic_counts.get(topic, 0) + 1
+                    total_marks += marks
+                
+                # Display analysis
+                col1, col2 = st.columns(2)
+                
+                with col1:
+                    st.metric("Total Questions", len(questions))
+                    st.metric("Total Marks", total_marks)
+                
+                with col2:
+                    st.metric("Question Types", len(type_counts))
+                    st.metric("Topics Covered", len(topic_counts))
+                
+                # Charts
+                col1, col2 = st.columns(2)
+                
+                with col1:
+                    if type_counts:
+                        type_df = pd.DataFrame([{'Type': k, 'Count': v} for k, v in type_counts.items()])
+                        fig1 = px.pie(type_df, values='Count', names='Type', title=f'{subject_name} - Question Type Distribution')
+                        st.plotly_chart(fig1, use_container_width=True)
+                    
+                    if marks_counts:
+                        marks_df = pd.DataFrame([{'Marks': k, 'Count': v} for k, v in marks_counts.items()])
+                        fig3 = px.bar(marks_df, x='Marks', y='Count', title=f'{subject_name} - Marks Distribution')
+                        st.plotly_chart(fig3, use_container_width=True)
+                
+                with col2:
+                    if topic_counts:
+                        topic_df = pd.DataFrame([{'Topic': k, 'Count': v} for k, v in topic_counts.items()])
+                        fig2 = px.bar(topic_df, x='Topic', y='Count', title=f'{subject_name} - Topic Distribution')
+                        fig2.update_xaxes(tickangle=45)
+                        st.plotly_chart(fig2, use_container_width=True)
+                    
+                    if bloom_counts:
+                        bloom_df = pd.DataFrame([{'Level': k, 'Count': v} for k, v in bloom_counts.items()])
+                        fig4 = px.bar(bloom_df, x='Level', y='Count', title=f'{subject_name} - Bloom\'s Taxonomy')
+                        st.plotly_chart(fig4, use_container_width=True)
+                
+                # Insights
+                st.markdown("### 💡 Custom Paper Insights")
+                insights = []
+                
+                if type_counts:
+                    most_common_type = max(type_counts, key=type_counts.get)
+                    insights.append(f"**Most common question type:** {most_common_type}")
+                
+                if marks_counts:
+                    most_common_marks = max(marks_counts, key=marks_counts.get)
+                    insights.append(f"**Most common marks per question:** {most_common_marks}")
+                
+                if topic_counts:
+                    most_common_topic = max(topic_counts, key=topic_counts.get)
+                    insights.append(f"**Most frequently tested topic:** {most_common_topic}")
+                
+                for insight in insights:
+                    st.write(f"• {insight}")
+                
+                # Export analysis
+                st.markdown("### 📤 Export Analysis")
+                analysis_data = {
+                    'subject': subject_name,
+                    'total_questions': len(questions),
+                    'total_marks': total_marks,
+                    'type_distribution': type_counts,
+                    'marks_distribution': marks_counts,
+                    'topic_distribution': topic_counts,
+                    'bloom_distribution': bloom_counts,
+                    'questions': questions
+                }
+                
+                col1, col2 = st.columns(2)
+                
+                with col1:
+                    st.download_button(
+                        '📊 Download Analysis as JSON',
+                        json.dumps(analysis_data, indent=2),
+                        file_name=f'{subject_name}_pattern_analysis.json',
+                        mime='application/json'
+                    )
+                
+                with col2:
+                    # Create CSV of questions
+                    questions_df = pd.DataFrame(questions)
+                    csv_data = questions_df.to_csv(index=False)
+                    st.download_button(
+                        '📋 Download Questions as CSV',
+                        csv_data,
+                        file_name=f'{subject_name}_questions.csv',
+                        mime='text/csv'
+                    )
     
     if st.button("← Back to Home"):
         st.session_state.show_pattern_analysis = False
