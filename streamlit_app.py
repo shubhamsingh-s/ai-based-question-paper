@@ -207,6 +207,7 @@ def main():
                 with st.form("login_form"):
                     username = st.text_input("👤 Username", placeholder="Enter your username")
                     password = st.text_input("🔒 Password", type="password", placeholder="Enter your password")
+                    st.info("💡 Password characters are hidden for security - this is normal!")
                     col1, col2, col3 = st.columns(3)
                     with col2:
                         submit_button = st.form_submit_button("🚀 Login", type="primary", use_container_width=True)
