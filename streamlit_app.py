@@ -368,7 +368,6 @@ def main():
                 with st.form("login_form"):
                     name = st.text_input("👤 Your Name", placeholder="Enter your full name")
                     institution = st.text_input("🏫 Institution", placeholder="University/College/School name")
-                    st.info("💡 Your information will be stored securely in our database.")
                     col1, col2, col3 = st.columns(3)
                     with col2:
                         submit_button = st.form_submit_button("🚀 Start Using QuestVibe", type="primary", use_container_width=True)
