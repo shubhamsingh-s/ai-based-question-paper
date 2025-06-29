@@ -499,6 +499,254 @@ def super_admin_dashboard():
         st.session_state.show_super_admin = False
         st.rerun()
 
+# AI Chatbot System
+class QuestVibeAI:
+    def __init__(self):
+        self.conversation_history = []
+        self.system_knowledge = {
+            "features": [
+                "Auto Question Generation - Generate questions from predefined syllabus topics",
+                "Manual Question Creation - Create questions by uploading or pasting syllabus",
+                "Pattern Analysis - Analyze past papers to understand exam patterns",
+                "Database Tracking - All user activities are securely stored",
+                "Multiple Question Types - MCQ, Short Answer, Long Answer, Case Study",
+                "Bloom's Taxonomy - Questions categorized by cognitive levels"
+            ],
+            "subjects": [
+                "Database Management System - DBMS, ER Model, SQL, Normalization",
+                "Big Data Fundamentals - Hadoop, MapReduce, NoSQL, Analytics",
+                "Computer Networks - OSI Model, TCP/IP, Network Security"
+            ],
+            "question_types": [
+                "MCQ - Multiple Choice Questions with 4 options",
+                "Short Answer - Brief explanations and definitions",
+                "Long Answer - Detailed explanations and analysis",
+                "Case Study - Real-world scenarios and problem-solving"
+            ],
+            "commands": [
+                "generate questions - Create questions for a specific subject",
+                "help - Get help with using QuestVibe",
+                "subjects - List available subjects",
+                "question types - Explain different question types",
+                "features - Show QuestVibe features",
+                "clear - Clear conversation history"
+            ]
+        }
+    
+    def get_response(self, user_input):
+        user_input = user_input.lower().strip()
+        
+        # Add to conversation history
+        self.conversation_history.append({"role": "user", "content": user_input})
+        
+        # Generate AI response based on input
+        response = self.generate_ai_response(user_input)
+        
+        # Add response to history
+        self.conversation_history.append({"role": "assistant", "content": response})
+        
+        return response
+    
+    def generate_ai_response(self, user_input):
+        # Greeting patterns
+        if any(word in user_input for word in ["hello", "hi", "hey", "greetings"]):
+            return "👋 Hello! I'm QuestVibe AI, your intelligent assistant for question paper generation. How can I help you today? You can ask me about features, subjects, question types, or request help with generating questions!"
+        
+        # Help patterns
+        elif any(word in user_input for word in ["help", "assist", "support", "guide"]):
+            return """🤖 **QuestVibe AI Assistant - How I Can Help You:**
+
+**📚 Question Generation:**
+- "Generate questions for Database Management"
+- "Create 20 MCQs for Big Data"
+- "Make questions about Computer Networks"
+
+**📖 Information:**
+- "What subjects are available?"
+- "Explain question types"
+- "Show QuestVibe features"
+
+**🛠️ System Help:**
+- "How to use auto generation?"
+- "How to upload syllabus?"
+- "How to analyze patterns?"
+
+**💬 General:**
+- "Hello" - Greeting
+- "Clear" - Reset conversation
+- "Help" - This message
+
+What would you like to know about? 🚀"""
+        
+        # Subject queries
+        elif any(word in user_input for word in ["subject", "subjects", "topics", "available"]):
+            return """📚 **Available Subjects in QuestVibe:**
+
+1. **Database Management System**
+   - Introduction to DBMS
+   - ER Model and Relational Model
+   - SQL and Normalization
+   - Transaction Management
+   - Database Security
+
+2. **Big Data Fundamentals**
+   - Introduction to Big Data
+   - Hadoop Ecosystem
+   - MapReduce and HDFS
+   - NoSQL Databases
+   - Big Data Analytics
+
+3. **Computer Networks**
+   - Network Fundamentals
+   - OSI Model and TCP/IP
+   - Network Protocols
+   - Network Security
+   - Wireless Networks
+
+Which subject would you like to generate questions for? 🎯"""
+        
+        # Question types
+        elif any(word in user_input for word in ["question type", "types", "mcq", "short answer", "long answer", "case study"]):
+            return """📝 **Question Types in QuestVibe:**
+
+1. **MCQ (Multiple Choice Questions)**
+   - 4 options (A, B, C, D)
+   - Perfect for testing knowledge
+   - Quick to answer and grade
+
+2. **Short Answer**
+   - Brief explanations
+   - Definitions and concepts
+   - 2-3 sentence responses
+
+3. **Long Answer**
+   - Detailed explanations
+   - Analysis and discussion
+   - Comprehensive responses
+
+4. **Case Study**
+   - Real-world scenarios
+   - Problem-solving questions
+   - Practical applications
+
+Each type tests different cognitive levels according to Bloom's Taxonomy! 🧠"""
+        
+        # Generate questions
+        elif any(word in user_input for word in ["generate", "create", "make", "questions"]):
+            subject = self.extract_subject(user_input)
+            num_questions = self.extract_number(user_input)
+            question_types = self.extract_question_types(user_input)
+            
+            if subject:
+                return f"""🚀 **Question Generation Request:**
+
+**Subject:** {subject}
+**Number of Questions:** {num_questions or 'Default (20)'}
+**Question Types:** {', '.join(question_types) if question_types else 'All types'}
+
+To generate these questions:
+1. Go to the main dashboard
+2. Click "Start Auto Generation"
+3. Select "{subject}" from the dropdown
+4. Choose your question types
+5. Click "Generate Questions"
+
+I'll help you create comprehensive questions based on your requirements! 📚"""
+            else:
+                return "Please specify a subject! Available subjects: Database Management System, Big Data Fundamentals, Computer Networks. Example: 'Generate 15 MCQs for Database Management'"
+        
+        # Features
+        elif any(word in user_input for word in ["feature", "features", "what can", "capabilities"]):
+            return """✨ **QuestVibe Features:**
+
+🤖 **Auto Generation**
+- Generate questions from predefined topics
+- Multiple subjects available
+- Customizable question types and counts
+
+📝 **Manual Creation**
+- Upload syllabus files (PDF, DOCX, TXT)
+- Paste syllabus text directly
+- Create custom question papers
+
+📊 **Pattern Analysis**
+- Analyze past question papers
+- Understand exam patterns
+- Get insights and trends
+
+🗄️ **Database Tracking**
+- All activities are logged
+- User session tracking
+- Generation history
+
+🎯 **Multiple Question Types**
+- MCQ, Short Answer, Long Answer, Case Study
+- Bloom's Taxonomy integration
+- Difficulty level control
+
+📈 **Analytics & Reports**
+- Usage statistics
+- Performance metrics
+- Export capabilities
+
+What feature would you like to explore? 🚀"""
+        
+        # Clear conversation
+        elif any(word in user_input for word in ["clear", "reset", "new", "start over"]):
+            self.conversation_history = []
+            return "🧹 Conversation cleared! How can I help you with QuestVibe today?"
+        
+        # Default response
+        else:
+            return """🤖 I'm not sure I understood that. Here are some things I can help you with:
+
+• **Generate questions** for specific subjects
+• **Explain features** of QuestVibe
+• **List available subjects** and topics
+• **Describe question types** and their uses
+• **Provide guidance** on using the system
+
+Try asking: "What subjects are available?" or "Generate questions for Database Management" or "Help" for more options! 🚀"""
+    
+    def extract_subject(self, text):
+        subjects = {
+            "database": "Database Management System",
+            "dbms": "Database Management System",
+            "big data": "Big Data Fundamentals",
+            "hadoop": "Big Data Fundamentals",
+            "computer network": "Computer Networks",
+            "networks": "Computer Networks",
+            "network": "Computer Networks"
+        }
+        
+        for key, subject in subjects.items():
+            if key in text.lower():
+                return subject
+        return None
+    
+    def extract_number(self, text):
+        import re
+        numbers = re.findall(r'\d+', text)
+        if numbers:
+            return int(numbers[0])
+        return None
+    
+    def extract_question_types(self, text):
+        types = []
+        if "mcq" in text.lower():
+            types.append("MCQ")
+        if "short" in text.lower():
+            types.append("Short Answer")
+        if "long" in text.lower():
+            types.append("Long Answer")
+        if "case" in text.lower():
+            types.append("Case Study")
+        return types
+
+# Initialize AI
+if 'questvibe_ai' not in st.session_state:
+    st.session_state.questvibe_ai = QuestVibeAI()
+
 def main():
     if 'authenticated' not in st.session_state:
         st.session_state.authenticated = False
@@ -709,6 +957,74 @@ def main():
     with col4:
         st.metric("Bloom's Levels", "6 Levels", "🧠")
 
+    st.markdown("---")
+    
+    # AI Assistant Section
+    st.markdown("### 🤖 QuestVibe AI Assistant")
+    st.write("Ask me anything about QuestVibe, question generation, or get help with using the system!")
+    
+    # Chat interface
+    if 'chat_messages' not in st.session_state:
+        st.session_state.chat_messages = []
+    
+    # Display chat history
+    chat_container = st.container()
+    with chat_container:
+        for message in st.session_state.chat_messages:
+            if message["role"] == "user":
+                st.markdown(f"**👤 You:** {message['content']}")
+            else:
+                st.markdown(f"**🤖 QuestVibe AI:** {message['content']}")
+    
+    # Chat input
+    with st.form("chat_form"):
+        col1, col2 = st.columns([4, 1])
+        with col1:
+            user_message = st.text_input("💬 Ask QuestVibe AI:", placeholder="e.g., 'Generate questions for Database Management' or 'Help'")
+        with col2:
+            send_button = st.form_submit_button("🚀 Send", type="primary")
+        
+        if send_button and user_message.strip():
+            # Add user message to chat
+            st.session_state.chat_messages.append({"role": "user", "content": user_message})
+            
+            # Get AI response
+            ai_response = st.session_state.questvibe_ai.get_response(user_message)
+            st.session_state.chat_messages.append({"role": "assistant", "content": ai_response})
+            
+            st.rerun()
+    
+    # Quick action buttons
+    st.markdown("**💡 Quick Actions:**")
+    col1, col2, col3, col4 = st.columns(4)
+    
+    with col1:
+        if st.button("📚 Subjects", key="subjects_btn"):
+            st.session_state.chat_messages.append({"role": "user", "content": "What subjects are available?"})
+            ai_response = st.session_state.questvibe_ai.get_response("What subjects are available?")
+            st.session_state.chat_messages.append({"role": "assistant", "content": ai_response})
+            st.rerun()
+    
+    with col2:
+        if st.button("📝 Question Types", key="types_btn"):
+            st.session_state.chat_messages.append({"role": "user", "content": "Explain question types"})
+            ai_response = st.session_state.questvibe_ai.get_response("Explain question types")
+            st.session_state.chat_messages.append({"role": "assistant", "content": ai_response})
+            st.rerun()
+    
+    with col3:
+        if st.button("✨ Features", key="features_btn"):
+            st.session_state.chat_messages.append({"role": "user", "content": "Show QuestVibe features"})
+            ai_response = st.session_state.questvibe_ai.get_response("Show QuestVibe features")
+            st.session_state.chat_messages.append({"role": "assistant", "content": ai_response})
+            st.rerun()
+    
+    with col4:
+        if st.button("🧹 Clear Chat", key="clear_btn"):
+            st.session_state.chat_messages = []
+            st.session_state.questvibe_ai.conversation_history = []
+            st.rerun()
+    
     st.markdown("---")
     
     # Admin section
