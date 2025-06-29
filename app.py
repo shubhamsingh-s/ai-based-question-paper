@@ -16,7 +16,7 @@ st.set_page_config(
 # Custom CSS for enhanced styling
 st.markdown("""
 <style>
-/* Main background styling */
+/* Main background styling with aesthetic image */
 .main {
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     min-height: 100vh;
@@ -30,13 +30,13 @@ st.markdown("""
 
 /* Container background with glass effect */
 .main .block-container {
-    background: rgba(255, 255, 255, 0.95);
-    backdrop-filter: blur(10px);
+    background: rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(20px);
     border-radius: 20px;
     padding: 2rem;
     margin: 1rem;
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.2);
 }
 
 h1 {
@@ -47,10 +47,10 @@ h1 {
     background-clip: text;
     animation: gradient 3s ease infinite;
     text-align: center;
-    font-size: 3.5rem !important;
-    font-weight: 800 !important;
-    margin-bottom: 2rem !important;
-    text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+    font-size: 3.5rem;
+    font-weight: 800;
+    margin-bottom: 2rem;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
 }
 
 @keyframes gradient {
@@ -60,190 +60,254 @@ h1 {
 }
 
 .stButton > button {
-    background: linear-gradient(45deg, #667eea, #764ba2) !important;
-    color: white !important;
-    border: none !important;
-    border-radius: 15px !important;
-    padding: 0.75rem 2rem !important;
-    font-weight: 600 !important;
-    transition: all 0.3s ease !important;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.2) !important;
+    background: linear-gradient(45deg, #667eea, #764ba2);
+    color: white;
+    border: none;
+    border-radius: 15px;
+    padding: 0.75rem 2rem;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
 }
 
 .stButton > button:hover {
-    transform: translateY(-2px) !important;
-    box-shadow: 0 6px 20px rgba(0,0,0,0.3) !important;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0,0,0,0.4);
 }
 
 .stButton > button[data-baseweb="button"] {
-    background: linear-gradient(45deg, #FF6B6B, #4ECDC4) !important;
-    font-size: 1.2rem !important;
-    padding: 1rem 2.5rem !important;
-    border-radius: 25px !important;
+    background: linear-gradient(45deg, #FF6B6B, #4ECDC4);
+    font-size: 1.2rem;
+    padding: 1rem 2.5rem;
+    border-radius: 25px;
 }
 
 div[data-testid="column"] {
-    background: rgba(255, 255, 255, 0.98) !important;
-    border-radius: 20px !important;
-    padding: 2rem !important;
-    margin: 1rem 0.5rem !important;
-    box-shadow: 0 8px 32px rgba(0,0,0,0.1) !important;
-    border: 1px solid rgba(255, 255, 255, 0.2) !important;
-    transition: all 0.3s ease !important;
-    backdrop-filter: blur(10px) !important;
+    background: rgba(255, 255, 255, 0.25);
+    border-radius: 20px;
+    padding: 2rem;
+    margin: 1rem 0.5rem;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.15);
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    transition: all 0.3s ease;
+    backdrop-filter: blur(20px);
 }
 
 div[data-testid="column"]:hover {
-    transform: translateY(-5px) !important;
-    box-shadow: 0 12px 40px rgba(0,0,0,0.15) !important;
+    transform: translateY(-5px);
+    box-shadow: 0 12px 40px rgba(0,0,0,0.2);
+    background: rgba(255, 255, 255, 0.3);
 }
 
 div[data-testid="metric-container"] {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
-    border-radius: 15px !important;
-    padding: 1.5rem !important;
-    color: white !important;
-    text-align: center !important;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.2) !important;
-    margin: 0.5rem 0 !important;
+    background: linear-gradient(135deg, rgba(102, 126, 234, 0.9), rgba(118, 75, 162, 0.9));
+    border-radius: 15px;
+    padding: 1.5rem;
+    color: white;
+    text-align: center;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+    margin: 0.5rem 0;
+    backdrop-filter: blur(10px);
 }
 
 .footer {
-    background: linear-gradient(135deg, #2c3e50, #34495e) !important;
-    color: white !important;
-    text-align: center !important;
-    padding: 2rem !important;
-    border-radius: 20px !important;
-    margin-top: 3rem !important;
-    box-shadow: 0 8px 32px rgba(0,0,0,0.1) !important;
+    background: linear-gradient(135deg, rgba(44, 62, 80, 0.9), rgba(52, 73, 94, 0.9));
+    color: white;
+    text-align: center;
+    padding: 2rem;
+    border-radius: 20px;
+    margin-top: 3rem;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+    backdrop-filter: blur(15px);
 }
 
-/* Text color adjustments for better readability */
+/* Enhanced text styling for better readability */
 p, h2, h3, h4, h5, h6 {
-    color: #2c3e50 !important;
-    font-weight: 500 !important;
+    color: #ffffff;
+    font-weight: 600;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
 }
 
-/* Make all text containers have white background */
+/* Enhanced text containers */
 div[data-testid="stMarkdown"] {
-    background: rgba(255, 255, 255, 0.95) !important;
-    padding: 1rem !important;
-    border-radius: 10px !important;
-    margin: 0.5rem 0 !important;
+    background: rgba(255, 255, 255, 0.15);
+    padding: 1rem;
+    border-radius: 10px;
+    margin: 0.5rem 0;
+    backdrop-filter: blur(15px);
+    border: 1px solid rgba(255, 255, 255, 0.3);
 }
 
-/* Streamlit elements background */
+/* Enhanced Streamlit elements */
 .stTextInput > div > div > input {
-    background: rgba(255, 255, 255, 0.95) !important;
-    border-radius: 10px !important;
-    border: 2px solid #e0e0e0 !important;
+    background: rgba(255, 255, 255, 0.25);
+    border-radius: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    color: #ffffff;
+    backdrop-filter: blur(15px);
+    font-weight: 500;
+}
+
+.stTextInput > div > div > input::placeholder {
+    color: rgba(255, 255, 255, 0.8);
 }
 
 .stSelectbox > div > div > div {
-    background: rgba(255, 255, 255, 0.95) !important;
-    border-radius: 10px !important;
-    border: 2px solid #e0e0e0 !important;
+    background: rgba(255, 255, 255, 0.25);
+    border-radius: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    backdrop-filter: blur(15px);
 }
 
 .stSlider > div > div > div > div {
-    background: rgba(255, 255, 255, 0.95) !important;
+    background: rgba(255, 255, 255, 0.25);
 }
 
-/* Success and info boxes */
+/* Enhanced alert boxes */
 .stAlert {
-    background: rgba(255, 255, 255, 0.98) !important;
-    border-radius: 15px !important;
-    backdrop-filter: blur(10px) !important;
-    border: 2px solid #e0e0e0 !important;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 15px;
+    backdrop-filter: blur(15px);
+    border: 1px solid rgba(255, 255, 255, 0.4);
 }
 
-/* Make expandable sections more visible */
+/* Enhanced expandable sections */
 .streamlit-expanderHeader {
-    background: rgba(255, 255, 255, 0.95) !important;
-    border-radius: 10px !important;
-    padding: 1rem !important;
-    margin: 0.5rem 0 !important;
-    border: 2px solid #e0e0e0 !important;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 10px;
+    padding: 1rem;
+    margin: 0.5rem 0;
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    backdrop-filter: blur(15px);
+    color: #ffffff;
+    font-weight: 600;
 }
 
 .streamlit-expanderContent {
-    background: rgba(255, 255, 255, 0.95) !important;
-    border-radius: 10px !important;
-    padding: 1rem !important;
-    margin: 0.5rem 0 !important;
-    border: 2px solid #e0e0e0 !important;
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 10px;
+    padding: 1rem;
+    margin: 0.5rem 0;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    backdrop-filter: blur(15px);
 }
 
-/* Make tabs more visible */
+/* Enhanced tabs */
 .stTabs [data-baseweb="tab-list"] {
-    background: rgba(255, 255, 255, 0.95) !important;
-    border-radius: 10px !important;
-    padding: 0.5rem !important;
-    margin: 0.5rem 0 !important;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 10px;
+    padding: 0.5rem;
+    margin: 0.5rem 0;
+    backdrop-filter: blur(15px);
 }
 
 .stTabs [data-baseweb="tab"] {
-    background: rgba(255, 255, 255, 0.95) !important;
-    border-radius: 8px !important;
-    margin: 0.2rem !important;
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 8px;
+    margin: 0.2rem;
+    color: #ffffff;
+    backdrop-filter: blur(15px);
+    font-weight: 500;
 }
 
-/* Make file uploader more visible */
+/* Enhanced file uploader */
 .stFileUploader {
-    background: rgba(255, 255, 255, 0.95) !important;
-    border-radius: 15px !important;
-    padding: 1rem !important;
-    border: 2px solid #e0e0e0 !important;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 15px;
+    padding: 1rem;
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    backdrop-filter: blur(15px);
 }
 
-/* Make text areas more visible */
+/* Enhanced text areas */
 .stTextArea textarea {
-    background: rgba(255, 255, 255, 0.95) !important;
-    border-radius: 10px !important;
-    border: 2px solid #e0e0e0 !important;
+    background: rgba(255, 255, 255, 0.25);
+    border-radius: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    color: #ffffff;
+    backdrop-filter: blur(15px);
+    font-weight: 500;
 }
 
-/* Make multiselect more visible */
+.stTextArea textarea::placeholder {
+    color: rgba(255, 255, 255, 0.8);
+}
+
+/* Enhanced multiselect */
 .stMultiSelect > div > div > div {
-    background: rgba(255, 255, 255, 0.95) !important;
-    border-radius: 10px !important;
-    border: 2px solid #e0e0e0 !important;
+    background: rgba(255, 255, 255, 0.25);
+    border-radius: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    backdrop-filter: blur(15px);
 }
 
 /* Ensure all text is readable */
 * {
-    color: #2c3e50 !important;
+    color: #ffffff;
 }
 
-/* Make links more visible */
+/* Enhanced links */
 a {
-    color: #3498db !important;
-    font-weight: 600 !important;
+    color: #87CEEB;
+    font-weight: 600;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
 }
 
-/* Make success/error messages more visible */
+/* Enhanced success/error messages */
 .stSuccess {
-    background: rgba(46, 204, 113, 0.1) !important;
-    border: 2px solid #2ecc71 !important;
-    color: #27ae60 !important;
+    background: rgba(46, 204, 113, 0.3);
+    border: 1px solid rgba(46, 204, 113, 0.6);
+    color: #ffffff;
+    backdrop-filter: blur(15px);
 }
 
 .stError {
-    background: rgba(231, 76, 60, 0.1) !important;
-    border: 2px solid #e74c3c !important;
-    color: #c0392b !important;
+    background: rgba(231, 76, 60, 0.3);
+    border: 1px solid rgba(231, 76, 60, 0.6);
+    color: #ffffff;
+    backdrop-filter: blur(15px);
 }
 
 .stWarning {
-    background: rgba(241, 196, 15, 0.1) !important;
-    border: 2px solid #f1c40f !important;
-    color: #f39c12 !important;
+    background: rgba(241, 196, 15, 0.3);
+    border: 1px solid rgba(241, 196, 15, 0.6);
+    color: #ffffff;
+    backdrop-filter: blur(15px);
 }
 
 .stInfo {
-    background: rgba(52, 152, 219, 0.1) !important;
-    border: 2px solid #3498db !important;
-    color: #2980b9 !important;
+    background: rgba(52, 152, 219, 0.3);
+    border: 1px solid rgba(52, 152, 219, 0.6);
+    color: #ffffff;
+    backdrop-filter: blur(15px);
+}
+
+/* Additional styling for better integration */
+.stMarkdown {
+    background: rgba(255, 255, 255, 0.15);
+    padding: 1rem;
+    border-radius: 10px;
+    margin: 0.5rem 0;
+    backdrop-filter: blur(15px);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+/* Enhanced dataframes */
+.dataframe {
+    background: rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(15px);
+    border-radius: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+/* Enhanced charts and plots */
+.element-container {
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 10px;
+    padding: 1rem;
+    margin: 0.5rem 0;
+    backdrop-filter: blur(15px);
+    border: 1px solid rgba(255, 255, 255, 0.3);
 }
 </style>
 """, unsafe_allow_html=True)
@@ -257,6 +321,10 @@ if 'show_pattern_analysis' not in st.session_state:
     st.session_state.show_pattern_analysis = False
 if 'custom_paper' not in st.session_state:
     st.session_state.custom_paper = None
+if 'authenticated' not in st.session_state:
+    st.session_state.authenticated = False
+if 'current_user' not in st.session_state:
+    st.session_state.current_user = None
 
 # Predefined syllabus topics
 SYLLABUS_TOPICS = {
@@ -1175,6 +1243,154 @@ def main():
             st.session_state.show_pattern_analysis = False
         if 'custom_paper' not in st.session_state:
             st.session_state.custom_paper = None
+        if 'authenticated' not in st.session_state:
+            st.session_state.authenticated = False
+        if 'current_user' not in st.session_state:
+            st.session_state.current_user = None
+        
+        # Simple user database (in production, use a real database)
+        USERS = {
+            "admin": {"password": "admin123", "role": "admin", "name": "Administrator"},
+            "teacher": {"password": "teacher123", "role": "teacher", "name": "Teacher"},
+            "student": {"password": "student123", "role": "student", "name": "Student"},
+            "demo": {"password": "demo123", "role": "teacher", "name": "Demo User"}
+        }
+        
+        # Login page
+        if not st.session_state.authenticated:
+            st.markdown("""
+            <div style="text-align: center; padding: 2rem;">
+                <h1 style="background: linear-gradient(45deg, #FF6B6B, #4ECDC4, #45B7D1, #96CEB4);
+                           background-size: 300% 300%;
+                           -webkit-background-clip: text;
+                           -webkit-text-fill-color: transparent;
+                           background-clip: text;
+                           animation: gradient 3s ease infinite;
+                           font-size: 4rem;
+                           font-weight: 800;
+                           margin-bottom: 1rem;">QuestVibe</h1>
+                <p style="font-size: 1.5rem; color: white; margin-bottom: 3rem;">AI-Powered Question Paper Generator</p>
+            </div>
+            """, unsafe_allow_html=True)
+            
+            # Create login form
+            with st.container():
+                col1, col2, col3 = st.columns([1, 2, 1])
+                with col2:
+                    st.markdown("""
+                    <div style="background: rgba(255, 255, 255, 0.2); 
+                                backdrop-filter: blur(20px); 
+                                border-radius: 20px; 
+                                padding: 2rem; 
+                                border: 1px solid rgba(255, 255, 255, 0.4);
+                                box-shadow: 0 8px 32px rgba(0,0,0,0.2);">
+                        <h2 style="text-align: center; color: white; margin-bottom: 2rem;">🔐 Login</h2>
+                    </div>
+                    """, unsafe_allow_html=True)
+                    
+                    with st.form("login_form"):
+                        username = st.text_input("👤 Username", placeholder="Enter your username")
+                        password = st.text_input("🔒 Password", type="password", placeholder="Enter your password")
+                        
+                        col1, col2, col3 = st.columns(3)
+                        with col2:
+                            submit_button = st.form_submit_button("🚀 Login", type="primary", use_container_width=True)
+                        
+                        if submit_button:
+                            if username in USERS and USERS[username]["password"] == password:
+                                st.session_state.authenticated = True
+                                st.session_state.current_user = {
+                                    "username": username,
+                                    "role": USERS[username]["role"],
+                                    "name": USERS[username]["name"]
+                                }
+                                st.success(f"✅ Welcome back, {USERS[username]['name']}!")
+                                st.rerun()
+                            else:
+                                st.error("❌ Invalid username or password!")
+                    
+                    # Demo credentials
+                    with st.expander("🔑 Demo Credentials"):
+                        st.markdown("""
+                        **Try these demo accounts:**
+                        
+                        👨‍💼 **Admin Account:**
+                        - Username: `admin`
+                        - Password: `admin123`
+                        
+                        👨‍🏫 **Teacher Account:**
+                        - Username: `teacher`
+                        - Password: `teacher123`
+                        
+                        👨‍🎓 **Student Account:**
+                        - Username: `student`
+                        - Password: `student123`
+                        
+                        🎯 **Demo Account:**
+                        - Username: `demo`
+                        - Password: `demo123`
+                        """)
+                    
+                    # Features preview
+                    st.markdown("---")
+                    st.markdown("### ✨ Features Preview")
+                    
+                    col1, col2, col3 = st.columns(3)
+                    with col1:
+                        st.markdown("""
+                        <div style="background: rgba(255, 255, 255, 0.15); 
+                                    border-radius: 15px; 
+                                    padding: 1rem; 
+                                    text-align: center;
+                                    border: 1px solid rgba(255, 255, 255, 0.3);">
+                            <h4 style="color: white;">🤖 Auto Generation</h4>
+                            <p style="color: white;">AI-powered question paper creation</p>
+                        </div>
+                        """, unsafe_allow_html=True)
+                    
+                    with col2:
+                        st.markdown("""
+                        <div style="background: rgba(255, 255, 255, 0.15); 
+                                    border-radius: 15px; 
+                                    padding: 1rem; 
+                                    text-align: center;
+                                    border: 1px solid rgba(255, 255, 255, 0.3);">
+                            <h4 style="color: white;">📝 Manual Creation</h4>
+                            <p style="color: white;">Custom question paper design</p>
+                        </div>
+                        """, unsafe_allow_html=True)
+                    
+                    with col3:
+                        st.markdown("""
+                        <div style="background: rgba(255, 255, 255, 0.15); 
+                                    border-radius: 15px; 
+                                    padding: 1rem; 
+                                    text-align: center;
+                                    border: 1px solid rgba(255, 255, 255, 0.3);">
+                            <h4 style="color: white;">📊 Pattern Analysis</h4>
+                            <p style="color: white;">Smart exam pattern insights</p>
+                        </div>
+                        """, unsafe_allow_html=True)
+            
+            return
+        
+        # Main app content (after login)
+        # User info and logout
+        col1, col2, col3, col4 = st.columns([3, 1, 1, 1])
+        
+        with col1:
+            if st.session_state.current_user:
+                user_role_emoji = {"admin": "👨‍💼", "teacher": "👨‍🏫", "student": "👨‍🎓"}.get(st.session_state.current_user["role"], "👤")
+                st.markdown(f"### {user_role_emoji} Welcome, {st.session_state.current_user['name']} ({st.session_state.current_user['role'].title()})")
+        
+        with col4:
+            if st.button("🚪 Logout", type="secondary"):
+                st.session_state.authenticated = False
+                st.session_state.current_user = None
+                st.session_state.show_auto_generation = False
+                st.session_state.show_manual_creation = False
+                st.session_state.show_pattern_analysis = False
+                st.rerun()
         
         if st.session_state.show_auto_generation:
             auto_generation_page()
@@ -1265,7 +1481,7 @@ def main():
         st.error(f"An error occurred: {str(e)}")
         st.info("Please refresh the page and try again.")
         # Reset session state
-        for key in ['show_auto_generation', 'show_manual_creation', 'show_pattern_analysis', 'custom_paper']:
+        for key in ['show_auto_generation', 'show_manual_creation', 'show_pattern_analysis', 'custom_paper', 'authenticated', 'current_user']:
             if key in st.session_state:
                 del st.session_state[key]
 
