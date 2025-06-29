@@ -29,12 +29,22 @@ st.markdown("""
         color: #1f77b4;
         text-align: center;
         margin-bottom: 2rem;
+        padding: 1rem;
+        background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+        border-radius: 10px;
+        color: white;
     }
     .feature-card {
-        background-color: #f0f2f6;
-        padding: 1rem;
-        border-radius: 0.5rem;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        padding: 1.5rem;
+        border-radius: 15px;
         margin: 1rem 0;
+        color: white;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        transition: transform 0.3s ease;
+    }
+    .feature-card:hover {
+        transform: translateY(-5px);
     }
     .success-message {
         background-color: #d4edda;
@@ -42,6 +52,22 @@ st.markdown("""
         padding: 1rem;
         border-radius: 0.5rem;
         border: 1px solid #c3e6cb;
+    }
+    .welcome-section {
+        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        padding: 2rem;
+        border-radius: 15px;
+        margin: 2rem 0;
+        color: white;
+        text-align: center;
+    }
+    .stButton > button {
+        background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+        border-radius: 10px;
+        padding: 0.5rem 2rem;
+        font-weight: bold;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -134,6 +160,43 @@ def main():
     
     # Header
     st.markdown('<h1 class="main-header">📝 Question Paper Maker</h1>', unsafe_allow_html=True)
+    
+    # Welcome Section - Always Visible
+    st.markdown("""
+    <div class="welcome-section">
+        <h2>🎯 Welcome to Question Paper Maker!</h2>
+        <p style="font-size: 1.2rem;">This intelligent system helps you create comprehensive question papers based on your syllabus topics.</p>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    # Feature Cards - Always Visible
+    st.markdown("### ✨ Key Features")
+    
+    col1, col2, col3 = st.columns(3)
+    
+    with col1:
+        st.markdown("""
+        <div class="feature-card">
+            <h4>📚 Syllabus-Based</h4>
+            <p>Generate questions from your specific syllabus topics with intelligent topic mapping and coverage analysis.</p>
+        </div>
+        """, unsafe_allow_html=True)
+    
+    with col2:
+        st.markdown("""
+        <div class="feature-card">
+            <h4>🎯 Multiple Types</h4>
+            <p>Support for MCQ, Short Answer, and Long Answer questions with customizable mark distribution.</p>
+        </div>
+        """, unsafe_allow_html=True)
+    
+    with col3:
+        st.markdown("""
+        <div class="feature-card">
+            <h4>📊 Smart Analysis</h4>
+            <p>Get detailed analytics and visualizations including question distribution, topic coverage, and performance metrics.</p>
+        </div>
+        """, unsafe_allow_html=True)
     
     # Sidebar
     st.sidebar.title("⚙️ Configuration")
@@ -294,40 +357,37 @@ def main():
     **Note:** This version works with basic dependencies and doesn't require file uploads.
     """)
     
-    # Main content area
-    if not st.session_state.get('questions_generated', False):
+    # Instructions section
+    st.markdown("---")
+    st.markdown("### 🚀 How to Use")
+    
+    instruction_col1, instruction_col2 = st.columns(2)
+    
+    with instruction_col1:
         st.markdown("""
-        <div class="feature-card">
-            <h3>🎯 Welcome to Question Paper Maker!</h3>
-            <p>This intelligent system helps you create comprehensive question papers based on your syllabus topics.</p>
-        </div>
-        """, unsafe_allow_html=True)
+        **Step 1: Configure Topics**
+        - Enter your syllabus topics in the sidebar
+        - One topic per line
+        - Use the default topics or add your own
         
-        col1, col2, col3 = st.columns(3)
+        **Step 2: Set Parameters**
+        - Choose number of questions
+        - Select question types
+        - Adjust mark distribution
+        """)
+    
+    with instruction_col2:
+        st.markdown("""
+        **Step 3: Generate Questions**
+        - Click "Generate Question Paper"
+        - View results in tabs
+        - Analyze statistics and charts
         
-        with col1:
-            st.markdown("""
-            <div class="feature-card">
-                <h4>📚 Syllabus-Based</h4>
-                <p>Generate questions from your specific syllabus topics</p>
-            </div>
-            """, unsafe_allow_html=True)
-        
-        with col2:
-            st.markdown("""
-            <div class="feature-card">
-                <h4>🎯 Multiple Types</h4>
-                <p>Support for MCQ, Short Answer, and Long Answer questions</p>
-            </div>
-            """, unsafe_allow_html=True)
-        
-        with col3:
-            st.markdown("""
-            <div class="feature-card">
-                <h4>📊 Smart Analysis</h4>
-                <p>Get detailed analytics and visualizations</p>
-            </div>
-            """, unsafe_allow_html=True)
+        **Step 4: Export Results**
+        - Download as JSON or CSV
+        - Share with colleagues
+        - Use for exam preparation
+        """)
 
 if __name__ == "__main__":
     main() 
