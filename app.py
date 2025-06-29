@@ -102,6 +102,8 @@ if 'show_manual_creation' not in st.session_state:
     st.session_state.show_manual_creation = False
 if 'show_pattern_analysis' not in st.session_state:
     st.session_state.show_pattern_analysis = False
+if 'custom_paper' not in st.session_state:
+    st.session_state.custom_paper = None
 
 # Predefined syllabus topics
 SYLLABUS_TOPICS = {
@@ -1010,90 +1012,109 @@ def auto_generation_page():
         st.rerun()
 
 def main():
-    if st.session_state.show_auto_generation:
-        auto_generation_page()
-        return
-    elif st.session_state.show_manual_creation:
-        manual_creation_page()
-        return
-    elif st.session_state.show_pattern_analysis:
-        pattern_analysis_page()
-        return
+    try:
+        # Initialize session state if not already done
+        if 'show_auto_generation' not in st.session_state:
+            st.session_state.show_auto_generation = False
+        if 'show_manual_creation' not in st.session_state:
+            st.session_state.show_manual_creation = False
+        if 'show_pattern_analysis' not in st.session_state:
+            st.session_state.show_pattern_analysis = False
+        if 'custom_paper' not in st.session_state:
+            st.session_state.custom_paper = None
+        
+        if st.session_state.show_auto_generation:
+            auto_generation_page()
+            return
+        elif st.session_state.show_manual_creation:
+            manual_creation_page()
+            return
+        elif st.session_state.show_pattern_analysis:
+            pattern_analysis_page()
+            return
+        
+        st.markdown("""
+        # Welcome to Question Paper Maker!
+
+        This intelligent system helps you create comprehensive question papers based on your syllabus topics.
+        """)
+
+        col1, col2, col3, col4 = st.columns(4)
+
+        with col1:
+            st.markdown("### 📚 Syllabus-Based")
+            st.write("Generate questions from your specific syllabus topics")
+
+        with col2:
+            st.markdown("### 🤖 Auto Generation")
+            st.write("Fully automated question paper creation with predefined topics")
+
+        with col3:
+            st.markdown("### 🎯 Multiple Types")
+            st.write("Support for MCQ, Short Answer, Long Answer, and Case Study questions")
+
+        with col4:
+            st.markdown("### 📊 Smart Analysis")
+            st.write("Get detailed analytics and visualizations with Bloom's taxonomy")
+
+        st.markdown("---")
+        st.markdown("### 🚀 Get Started")
+
+        col1, col2, col3 = st.columns(3)
+
+        with col1:
+            st.markdown("### 🤖 Auto Generation")
+            st.write("Generate questions automatically from predefined syllabus topics")
+            if st.button("Start Auto Generation", key="auto_btn", type="primary"):
+                st.session_state.show_auto_generation = True
+                st.rerun()
+
+        with col2:
+            st.markdown("### 📝 Manual Creation")
+            st.write("Create questions manually by uploading or pasting syllabus")
+            if st.button("Start Creating", key="create_btn"):
+                st.session_state.show_manual_creation = True
+                st.rerun()
+
+        with col3:
+            st.markdown("### 📊 Pattern Analysis")
+            st.write("Analyze past papers to understand exam patterns")
+            if st.button("Start Analysis", key="analyze_btn"):
+                st.session_state.show_pattern_analysis = True
+                st.rerun()
+
+        st.markdown("---")
+        st.markdown("### 📈 System Overview")
+
+        col1, col2, col3, col4 = st.columns(4)
+
+        with col1:
+            st.metric("Subjects Available", len(SYLLABUS_TOPICS), "📚")
+
+        with col2:
+            total_topics = sum(len(topics) for topics in SYLLABUS_TOPICS.values())
+            st.metric("Total Topics", total_topics, "🎯")
+
+        with col3:
+            st.metric("Question Types", "4 Supported", "📝")
+
+        with col4:
+            st.metric("Bloom's Levels", "6 Levels", "🧠")
+
+        st.markdown("---")
+        st.markdown("""
+        <div class="footer">
+            <p>🤖 Powered by AI • 🚀 Fully Automated • 📊 Smart Analytics • 🧠 Bloom's Taxonomy</p>
+        </div>
+        """, unsafe_allow_html=True)
     
-    st.markdown("""
-    # Welcome to Question Paper Maker!
-
-    This intelligent system helps you create comprehensive question papers based on your syllabus topics.
-    """)
-
-    col1, col2, col3, col4 = st.columns(4)
-
-    with col1:
-        st.markdown("### 📚 Syllabus-Based")
-        st.write("Generate questions from your specific syllabus topics")
-
-    with col2:
-        st.markdown("### 🤖 Auto Generation")
-        st.write("Fully automated question paper creation with predefined topics")
-
-    with col3:
-        st.markdown("### 🎯 Multiple Types")
-        st.write("Support for MCQ, Short Answer, Long Answer, and Case Study questions")
-
-    with col4:
-        st.markdown("### 📊 Smart Analysis")
-        st.write("Get detailed analytics and visualizations with Bloom's taxonomy")
-
-    st.markdown("---")
-    st.markdown("### 🚀 Get Started")
-
-    col1, col2, col3 = st.columns(3)
-
-    with col1:
-        st.markdown("### 🤖 Auto Generation")
-        st.write("Generate questions automatically from predefined syllabus topics")
-        if st.button("Start Auto Generation", key="auto_btn", type="primary"):
-            st.session_state.show_auto_generation = True
-            st.rerun()
-
-    with col2:
-        st.markdown("### 📝 Manual Creation")
-        st.write("Create questions manually by uploading or pasting syllabus")
-        if st.button("Start Creating", key="create_btn"):
-            st.session_state.show_manual_creation = True
-            st.rerun()
-
-    with col3:
-        st.markdown("### 📊 Pattern Analysis")
-        st.write("Analyze past papers to understand exam patterns")
-        if st.button("Start Analysis", key="analyze_btn"):
-            st.session_state.show_pattern_analysis = True
-            st.rerun()
-
-    st.markdown("---")
-    st.markdown("### 📈 System Overview")
-
-    col1, col2, col3, col4 = st.columns(4)
-
-    with col1:
-        st.metric("Subjects Available", len(SYLLABUS_TOPICS), "📚")
-
-    with col2:
-        total_topics = sum(len(topics) for topics in SYLLABUS_TOPICS.values())
-        st.metric("Total Topics", total_topics, "🎯")
-
-    with col3:
-        st.metric("Question Types", "4 Supported", "📝")
-
-    with col4:
-        st.metric("Bloom's Levels", "6 Levels", "🧠")
-
-    st.markdown("---")
-    st.markdown("""
-    <div class="footer">
-        <p>🤖 Powered by AI • 🚀 Fully Automated • 📊 Smart Analytics • 🧠 Bloom's Taxonomy</p>
-    </div>
-    """, unsafe_allow_html=True)
+    except Exception as e:
+        st.error(f"An error occurred: {str(e)}")
+        st.info("Please refresh the page and try again.")
+        # Reset session state
+        for key in ['show_auto_generation', 'show_manual_creation', 'show_pattern_analysis', 'custom_paper']:
+            if key in st.session_state:
+                del st.session_state[key]
 
 if __name__ == "__main__":
     main() 
