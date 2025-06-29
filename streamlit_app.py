@@ -1060,7 +1060,10 @@ class QuestVibeChatGPT:
             return questions[:num_questions]  # Ensure we get the requested number
             
         except Exception as e:
-            st.warning(f"ChatGPT API error: {str(e)}. Using fallback generation.")
+            # Only show detailed error to super admins
+            if hasattr(st.session_state, 'current_user') and st.session_state.current_user and st.session_state.current_user.get('role') == 'super_admin':
+                st.warning(f"ChatGPT API error: {str(e)}. Using fallback generation.")
+            # For normal users, just use fallback silently
             return self.generate_fallback_questions(subject, topics, num_questions, question_types)
     
     def create_question_prompt(self, subject: str, topics: List[str], num_questions: int, question_types: List[str]) -> str:
@@ -1151,7 +1154,9 @@ class QuestVibeChatGPT:
             return self.parse_manual_response(response, question_types)
             
         except Exception as e:
-            st.warning(f"Failed to parse ChatGPT response: {str(e)}")
+            # Only show parsing error to super admins
+            if hasattr(st.session_state, 'current_user') and st.session_state.current_user and st.session_state.current_user.get('role') == 'super_admin':
+                st.warning(f"Failed to parse ChatGPT response: {str(e)}")
             return self.parse_manual_response(response, question_types)
     
     def parse_manual_response(self, response: str, question_types: List[str]) -> List[Dict]:
@@ -1572,74 +1577,108 @@ def auto_generation_page():
                     st.write(f"*... and {len(topics) - 5} more topics*")
     
     if st.button("🚀 Generate Questions", type="primary"):
-        with st.spinner("🤖 AI is generating intelligent questions using ChatGPT..."):
-            # Log the generation activity to database
-            if st.session_state.current_user:
-                log_question_generation(
-                    st.session_state.current_user['id'],
-                    subject,
-                    num_questions,
-                    question_types
+        # Check if user is super admin
+        is_super_admin = (hasattr(st.session_state, 'current_user') and 
+                         st.session_state.current_user and 
+                         st.session_state.current_user.get('role') == 'super_admin')
+        
+        # Show appropriate loading message
+        if is_super_admin:
+            with st.spinner("🤖 AI is generating intelligent questions using ChatGPT..."):
+                # Log the generation activity to database
+                if st.session_state.current_user:
+                    log_question_generation(
+                        st.session_state.current_user['id'],
+                        subject,
+                        num_questions,
+                        question_types
+                    )
+                
+                # Get topics from AI database
+                topics = st.session_state.questvibe_ai_db.get_topics_by_subject(subject)
+                if not topics:
+                    # Fallback to hardcoded topics if none in database
+                    topics = ["Introduction", "Basic Concepts", "Advanced Topics", "Applications", "Case Studies"]
+                
+                # Generate questions using ChatGPT
+                questions = st.session_state.questvibe_chatgpt.generate_questions(
+                    subject, topics, num_questions, question_types
                 )
-            
-            # Get topics from AI database
-            topics = st.session_state.questvibe_ai_db.get_topics_by_subject(subject)
-            if not topics:
-                # Fallback to hardcoded topics if none in database
-                topics = ["Introduction", "Basic Concepts", "Advanced Topics", "Applications", "Case Studies"]
-            
-            # Generate questions using ChatGPT
-            questions = st.session_state.questvibe_chatgpt.generate_questions(
-                subject, topics, num_questions, question_types
-            )
-            
-            # Analyze question quality
-            analysis = st.session_state.questvibe_chatgpt.analyze_question_quality(questions)
-            
+        else:
+            # For normal users, show generic AI message
+            with st.spinner("🤖 AI is generating intelligent questions..."):
+                # Log the generation activity to database
+                if st.session_state.current_user:
+                    log_question_generation(
+                        st.session_state.current_user['id'],
+                        subject,
+                        num_questions,
+                        question_types
+                    )
+                
+                # Get topics from AI database
+                topics = st.session_state.questvibe_ai_db.get_topics_by_subject(subject)
+                if not topics:
+                    # Fallback to hardcoded topics if none in database
+                    topics = ["Introduction", "Basic Concepts", "Advanced Topics", "Applications", "Case Studies"]
+                
+                # Generate questions using ChatGPT (with silent fallback for normal users)
+                questions = st.session_state.questvibe_chatgpt.generate_questions(
+                    subject, topics, num_questions, question_types
+                )
+        
+        # Analyze question quality
+        analysis = st.session_state.questvibe_chatgpt.analyze_question_quality(questions)
+        
+        # Show success message based on user role
+        if is_super_admin:
             st.success(f"✅ Generated {len(questions)} intelligent questions using ChatGPT!")
-            st.info(f"🤖 AI used {len(topics)} topics from {selected_branch} - {subject}")
-            
-            # Show quality analysis
-            col1, col2, col3, col4 = st.columns(4)
-            with col1:
-                st.metric("Quality Score", f"{analysis['quality_score']}/100", "⭐")
-            with col2:
-                st.metric("Topics Covered", len(analysis['topic_coverage']), "🎯")
-            with col3:
-                st.metric("Question Types", len(analysis['type_distribution']), "📝")
-            with col4:
-                st.metric("Difficulty Levels", len(analysis['difficulty_distribution']), "📊")
-            
-            if st.session_state.current_user:
-                st.info(f"📊 Activity logged for {st.session_state.current_user['name']} from {st.session_state.current_user['institution']}")
-            
-            # Display questions with enhanced formatting
-            st.markdown("### 📋 Generated Questions")
-            
-            for i, q in enumerate(questions, 1):
-                with st.expander(f"Question {i}: {q.get('type', 'Question')} - {q.get('difficulty', 'Medium')} Difficulty", expanded=True):
-                    st.markdown(f"**{q['question']}**")
+        else:
+            st.success(f"✅ Generated {len(questions)} intelligent questions!")
+        
+        st.info(f"🤖 AI used {len(topics)} topics from {selected_branch} - {subject}")
+        
+        # Show quality analysis
+        col1, col2, col3, col4 = st.columns(4)
+        with col1:
+            st.metric("Quality Score", f"{analysis['quality_score']}/100", "⭐")
+        with col2:
+            st.metric("Topics Covered", len(analysis['topic_coverage']), "🎯")
+        with col3:
+            st.metric("Question Types", len(analysis['type_distribution']), "📝")
+        with col4:
+            st.metric("Difficulty Levels", len(analysis['difficulty_distribution']), "📊")
+        
+        if st.session_state.current_user:
+            st.info(f"📊 Activity logged for {st.session_state.current_user['name']} from {st.session_state.current_user['institution']}")
+        
+        # Display questions with enhanced formatting
+        st.markdown("### 📋 Generated Questions")
+        
+        for i, q in enumerate(questions, 1):
+            with st.expander(f"Question {i}: {q.get('type', 'Question')} - {q.get('difficulty', 'Medium')} Difficulty", expanded=True):
+                st.markdown(f"**{q['question']}**")
+                
+                # Show question metadata
+                col1, col2, col3 = st.columns(3)
+                with col1:
+                    st.write(f"**Type:** {q.get('type', 'Unknown')}")
+                with col2:
+                    st.write(f"**Difficulty:** {q.get('difficulty', 'Medium')}")
+                with col3:
+                    st.write(f"**Bloom Level:** {q.get('bloom_level', 'Understand')}")
+                
+                # Show options for MCQ
+                if q.get('type') == 'MCQ' and q.get('options'):
+                    st.write("**Options:**")
+                    for option in q['options']:
+                        st.write(f"   {option}")
                     
-                    # Show question metadata
-                    col1, col2, col3 = st.columns(3)
-                    with col1:
-                        st.write(f"**Type:** {q.get('type', 'Unknown')}")
-                    with col2:
-                        st.write(f"**Difficulty:** {q.get('difficulty', 'Medium')}")
-                    with col3:
-                        st.write(f"**Bloom Level:** {q.get('bloom_level', 'Understand')}")
-                    
-                    # Show options for MCQ
-                    if q.get('type') == 'MCQ' and q.get('options'):
-                        st.write("**Options:**")
-                        for option in q['options']:
-                            st.write(f"   {option}")
-                        
-                        if q.get('correct_answer'):
-                            st.success(f"**Correct Answer:** {q.get('correct_answer')}")
-                    
-                    st.write(f"**Topic:** {q.get('topic', 'General')}")
-                    st.markdown("---")
+                    if q.get('correct_answer'):
+                        st.success(f"**Correct Answer:** {q.get('correct_answer')}")
+                
+                st.write(f"**Topic:** {q.get('topic', 'General')}")
+                st.markdown("---")
     
     if st.button("🔙 Back to Dashboard"):
         st.session_state.show_auto_generation = False
