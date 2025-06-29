@@ -232,6 +232,14 @@ USERS = {
     "demo": {"password": "demo123", "role": "teacher", "name": "Demo User"}
 }
 
+# Super User credentials (hidden admin access)
+SUPER_USER = {
+    "username": "superadmin",
+    "password": "questvibe2024",
+    "role": "super_admin",
+    "name": "Super Administrator"
+}
+
 def save_user_to_database(name, institution):
     conn = sqlite3.connect('user_data.db')
     cursor = conn.cursor()
@@ -344,6 +352,153 @@ def admin_dashboard():
         st.session_state.show_admin = False
         st.rerun()
 
+def super_admin_dashboard():
+    st.markdown("## 🔓 Super Admin Dashboard")
+    st.warning("⚠️ **SUPER ADMIN ACCESS** - Full database control")
+    
+    # Get all database data
+    conn = sqlite3.connect('user_data.db')
+    
+    # Users table
+    st.markdown("### 👥 All Users")
+    users_df = pd.read_sql_query("SELECT * FROM users ORDER BY created_at DESC", conn)
+    if not users_df.empty:
+        st.dataframe(users_df, use_container_width=True)
+        
+        # Download users data
+        csv = users_df.to_csv(index=False)
+        st.download_button(
+            label="📥 Download Users Data (CSV)",
+            data=csv,
+            file_name="users_data.csv",
+            mime="text/csv"
+        )
+    else:
+        st.write("No users found in database")
+    
+    # Sessions table
+    st.markdown("### 📊 User Sessions")
+    sessions_df = pd.read_sql_query("""
+        SELECT s.*, u.name, u.institution 
+        FROM sessions s 
+        JOIN users u ON s.user_id = u.id 
+        ORDER BY s.session_start DESC
+    """, conn)
+    if not sessions_df.empty:
+        st.dataframe(sessions_df, use_container_width=True)
+        
+        csv = sessions_df.to_csv(index=False)
+        st.download_button(
+            label="📥 Download Sessions Data (CSV)",
+            data=csv,
+            file_name="sessions_data.csv",
+            mime="text/csv"
+        )
+    else:
+        st.write("No sessions found in database")
+    
+    # Question generations table
+    st.markdown("### 📝 Question Generations")
+    generations_df = pd.read_sql_query("""
+        SELECT qg.*, u.name, u.institution 
+        FROM question_generations qg 
+        JOIN users u ON qg.user_id = u.id 
+        ORDER BY qg.generated_at DESC
+    """, conn)
+    if not generations_df.empty:
+        st.dataframe(generations_df, use_container_width=True)
+        
+        csv = generations_df.to_csv(index=False)
+        st.download_button(
+            label="📥 Download Generations Data (CSV)",
+            data=csv,
+            file_name="generations_data.csv",
+            mime="text/csv"
+        )
+    else:
+        st.write("No question generations found in database")
+    
+    # Database statistics
+    st.markdown("### 📈 Database Statistics")
+    col1, col2, col3, col4 = st.columns(4)
+    
+    with col1:
+        total_users = len(users_df)
+        st.metric("Total Users", total_users, "👥")
+    
+    with col2:
+        total_sessions = len(sessions_df)
+        st.metric("Total Sessions", total_sessions, "📊")
+    
+    with col3:
+        total_generations = len(generations_df)
+        st.metric("Total Generations", total_generations, "📝")
+    
+    with col4:
+        if not generations_df.empty:
+            avg_questions = generations_df['num_questions'].mean()
+            st.metric("Avg Questions/Gen", f"{avg_questions:.1f}", "❓")
+        else:
+            st.metric("Avg Questions/Gen", "0", "❓")
+    
+    # Charts
+    if not generations_df.empty:
+        st.markdown("### 📊 Analytics Charts")
+        
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            # Subject distribution
+            subject_counts = generations_df['subject'].value_counts()
+            fig1 = px.pie(values=subject_counts.values, names=subject_counts.index, title="Question Generations by Subject")
+            st.plotly_chart(fig1, use_container_width=True)
+        
+        with col2:
+            # Questions per generation
+            fig2 = px.histogram(generations_df, x='num_questions', title="Distribution of Questions per Generation")
+            st.plotly_chart(fig2, use_container_width=True)
+    
+    # Database management
+    st.markdown("### 🗄️ Database Management")
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        if st.button("🗑️ Clear All Data", type="secondary"):
+            if st.checkbox("I understand this will delete ALL data permanently"):
+                cursor = conn.cursor()
+                cursor.execute("DELETE FROM question_generations")
+                cursor.execute("DELETE FROM sessions")
+                cursor.execute("DELETE FROM users")
+                conn.commit()
+                st.success("🗑️ All data cleared!")
+                st.rerun()
+    
+    with col2:
+        if st.button("📊 Export Full Database", type="secondary"):
+            # Create a zip file with all data
+            import zipfile
+            import io
+            
+            zip_buffer = io.BytesIO()
+            with zipfile.ZipFile(zip_buffer, 'w') as zip_file:
+                # Add each table as CSV
+                for table_name, df in [("users", users_df), ("sessions", sessions_df), ("generations", generations_df)]:
+                    csv_data = df.to_csv(index=False)
+                    zip_file.writestr(f"{table_name}.csv", csv_data)
+            
+            st.download_button(
+                label="📦 Download Full Database (ZIP)",
+                data=zip_buffer.getvalue(),
+                file_name="questvibe_database.zip",
+                mime="application/zip"
+            )
+    
+    conn.close()
+    
+    if st.button("🔙 Back to Dashboard"):
+        st.session_state.show_super_admin = False
+        st.rerun()
+
 def main():
     if 'authenticated' not in st.session_state:
         st.session_state.authenticated = False
@@ -401,6 +556,30 @@ def main():
                     
                     **Your data is safe and will only be used to improve your experience.**
                     """)
+                
+                # Hidden super user login (only visible if you know where to look)
+                with st.expander("🔧 System Admin Access", expanded=False):
+                    st.markdown("*For system administrators only*")
+                    with st.form("super_login_form"):
+                        super_username = st.text_input("🔑 Admin Username", placeholder="Enter admin username")
+                        super_password = st.text_input("🔐 Admin Password", type="password", placeholder="Enter admin password")
+                        super_submit = st.form_submit_button("🔓 Access Admin Panel", type="secondary")
+                        
+                        if super_submit:
+                            if (super_username == SUPER_USER["username"] and 
+                                super_password == SUPER_USER["password"]):
+                                st.session_state.authenticated = True
+                                st.session_state.current_user = {
+                                    "id": 0,
+                                    "name": SUPER_USER["name"],
+                                    "institution": "System Administration",
+                                    "role": "super_admin",
+                                    "session_id": 0
+                                }
+                                st.success("🔓 Super Admin access granted!")
+                                st.rerun()
+                            else:
+                                st.error("❌ Invalid admin credentials!")
                 st.markdown("---")
                 st.markdown("### ✨ Features Preview")
                 col1, col2, col3 = st.columns(3)
@@ -449,6 +628,8 @@ def main():
         st.session_state.show_pattern_analysis = False
     if 'show_admin' not in st.session_state:
         st.session_state.show_admin = False
+    if 'show_super_admin' not in st.session_state:
+        st.session_state.show_super_admin = False
     
     # Check which page to show
     if st.session_state.show_auto_generation:
@@ -462,6 +643,9 @@ def main():
         return
     elif st.session_state.show_admin:
         admin_dashboard()
+        return
+    elif st.session_state.show_super_admin:
+        super_admin_dashboard()
         return
     
     # Main dashboard
@@ -540,6 +724,19 @@ def main():
         if st.button("📊 View Database Analytics", type="secondary"):
             st.session_state.show_admin = True
             st.rerun()
+    
+    # Super Admin section (only for super_admin role)
+    if st.session_state.current_user and st.session_state.current_user.get('role') == 'super_admin':
+        st.markdown("### 🔓 Super Admin Tools")
+        col1, col2 = st.columns(2)
+        with col1:
+            if st.button("📊 View Database Analytics", type="secondary"):
+                st.session_state.show_admin = True
+                st.rerun()
+        with col2:
+            if st.button("🔓 Full Database Access", type="primary"):
+                st.session_state.show_super_admin = True
+                st.rerun()
     
     st.markdown("---")
     st.markdown("""
