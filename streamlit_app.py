@@ -499,253 +499,330 @@ def super_admin_dashboard():
         st.session_state.show_super_admin = False
         st.rerun()
 
-# AI Chatbot System
-class QuestVibeAI:
+# AI Database Population System
+class QuestVibeAIDatabase:
     def __init__(self):
-        self.conversation_history = []
-        self.system_knowledge = {
-            "features": [
-                "Auto Question Generation - Generate questions from predefined syllabus topics",
-                "Manual Question Creation - Create questions by uploading or pasting syllabus",
-                "Pattern Analysis - Analyze past papers to understand exam patterns",
-                "Database Tracking - All user activities are securely stored",
-                "Multiple Question Types - MCQ, Short Answer, Long Answer, Case Study",
-                "Bloom's Taxonomy - Questions categorized by cognitive levels"
-            ],
-            "subjects": [
-                "Database Management System - DBMS, ER Model, SQL, Normalization",
-                "Big Data Fundamentals - Hadoop, MapReduce, NoSQL, Analytics",
-                "Computer Networks - OSI Model, TCP/IP, Network Security"
-            ],
-            "question_types": [
-                "MCQ - Multiple Choice Questions with 4 options",
-                "Short Answer - Brief explanations and definitions",
-                "Long Answer - Detailed explanations and analysis",
-                "Case Study - Real-world scenarios and problem-solving"
-            ],
-            "commands": [
-                "generate questions - Create questions for a specific subject",
-                "help - Get help with using QuestVibe",
-                "subjects - List available subjects",
-                "question types - Explain different question types",
-                "features - Show QuestVibe features",
-                "clear - Clear conversation history"
-            ]
+        self.engineering_subjects = {
+            "Computer Science Engineering": {
+                "subjects": [
+                    "Data Structures and Algorithms",
+                    "Object-Oriented Programming",
+                    "Database Management Systems",
+                    "Computer Networks",
+                    "Operating Systems",
+                    "Software Engineering",
+                    "Web Technologies",
+                    "Machine Learning",
+                    "Artificial Intelligence",
+                    "Computer Architecture",
+                    "Digital Logic Design",
+                    "Computer Organization",
+                    "Data Communication",
+                    "Information Security",
+                    "Cloud Computing",
+                    "Big Data Analytics",
+                    "Internet of Things",
+                    "Mobile Computing",
+                    "Computer Graphics",
+                    "System Programming"
+                ],
+                "exam_topics": {
+                    "Data Structures and Algorithms": [
+                        "Arrays and Linked Lists", "Stacks and Queues", "Trees and Graphs",
+                        "Sorting Algorithms", "Searching Algorithms", "Dynamic Programming",
+                        "Greedy Algorithms", "Complexity Analysis", "Recursion", "Hash Tables"
+                    ],
+                    "Database Management Systems": [
+                        "ER Model", "Relational Model", "SQL Queries", "Normalization",
+                        "Transaction Management", "Concurrency Control", "Indexing",
+                        "Database Security", "Distributed Databases", "NoSQL Databases"
+                    ],
+                    "Computer Networks": [
+                        "OSI Model", "TCP/IP Protocol", "Network Topologies", "Routing Algorithms",
+                        "Network Security", "Wireless Networks", "Network Management",
+                        "Quality of Service", "Network Protocols", "Internet Architecture"
+                    ]
+                }
+            },
+            "Information Technology": {
+                "subjects": [
+                    "Programming Fundamentals",
+                    "Data Structures",
+                    "Database Systems",
+                    "Computer Networks",
+                    "Web Development",
+                    "Software Testing",
+                    "Information Security",
+                    "Cloud Computing",
+                    "Mobile App Development",
+                    "Data Analytics",
+                    "System Analysis and Design",
+                    "Operating Systems",
+                    "Computer Architecture",
+                    "Digital Electronics",
+                    "Computer Graphics",
+                    "Multimedia Systems",
+                    "E-Commerce",
+                    "Enterprise Systems",
+                    "Network Administration",
+                    "IT Project Management"
+                ],
+                "exam_topics": {
+                    "Programming Fundamentals": [
+                        "Variables and Data Types", "Control Structures", "Functions",
+                        "Arrays and Strings", "Object-Oriented Concepts", "Exception Handling",
+                        "File I/O", "Memory Management", "Debugging", "Code Optimization"
+                    ],
+                    "Web Development": [
+                        "HTML and CSS", "JavaScript", "PHP", "ASP.NET", "Web Servers",
+                        "Client-Side Scripting", "Server-Side Scripting", "Web Security",
+                        "Responsive Design", "Web APIs"
+                    ]
+                }
+            },
+            "Electronics and Communication": {
+                "subjects": [
+                    "Digital Electronics",
+                    "Analog Electronics",
+                    "Communication Systems",
+                    "Signals and Systems",
+                    "Electromagnetic Theory",
+                    "Antenna Theory",
+                    "Microwave Engineering",
+                    "Optical Communication",
+                    "Satellite Communication",
+                    "Wireless Communication",
+                    "Digital Signal Processing",
+                    "VLSI Design",
+                    "Microprocessors",
+                    "Control Systems",
+                    "Power Electronics",
+                    "Electronic Devices",
+                    "Circuit Theory",
+                    "Network Analysis",
+                    "Telecommunication Networks",
+                    "Information Theory"
+                ],
+                "exam_topics": {
+                    "Digital Electronics": [
+                        "Boolean Algebra", "Logic Gates", "Combinational Circuits",
+                        "Sequential Circuits", "Flip-Flops", "Counters", "Registers",
+                        "Memory Devices", "Digital ICs", "VHDL Programming"
+                    ],
+                    "Communication Systems": [
+                        "Amplitude Modulation", "Frequency Modulation", "Digital Modulation",
+                        "Pulse Modulation", "Multiplexing", "Demodulation", "Noise Analysis",
+                        "Channel Coding", "Error Detection", "Information Theory"
+                    ]
+                }
+            },
+            "Mechanical Engineering": {
+                "subjects": [
+                    "Engineering Mechanics",
+                    "Strength of Materials",
+                    "Machine Design",
+                    "Thermodynamics",
+                    "Fluid Mechanics",
+                    "Heat Transfer",
+                    "Manufacturing Processes",
+                    "CAD/CAM",
+                    "Automobile Engineering",
+                    "Robotics",
+                    "Control Systems",
+                    "Material Science",
+                    "Dynamics of Machines",
+                    "Theory of Machines",
+                    "Industrial Engineering",
+                    "Refrigeration and Air Conditioning",
+                    "Power Plant Engineering",
+                    "Automation",
+                    "Quality Control",
+                    "Project Management"
+                ],
+                "exam_topics": {
+                    "Engineering Mechanics": [
+                        "Statics", "Dynamics", "Kinematics", "Kinetics", "Friction",
+                        "Centroids", "Moment of Inertia", "Work and Energy", "Impulse and Momentum",
+                        "Vibration Analysis"
+                    ],
+                    "Thermodynamics": [
+                        "First Law", "Second Law", "Entropy", "Gas Cycles", "Vapor Cycles",
+                        "Heat Engines", "Refrigeration Cycles", "Psychrometrics", "Combustion",
+                        "Steam Tables"
+                    ]
+                }
+            },
+            "Civil Engineering": {
+                "subjects": [
+                    "Structural Analysis",
+                    "Reinforced Concrete Design",
+                    "Steel Structures",
+                    "Transportation Engineering",
+                    "Geotechnical Engineering",
+                    "Hydraulics",
+                    "Environmental Engineering",
+                    "Surveying",
+                    "Construction Management",
+                    "Highway Engineering",
+                    "Bridge Engineering",
+                    "Water Resources",
+                    "Irrigation Engineering",
+                    "Town Planning",
+                    "Building Materials",
+                    "Soil Mechanics",
+                    "Foundation Engineering",
+                    "Earthquake Engineering",
+                    "Traffic Engineering",
+                    "Project Planning"
+                ],
+                "exam_topics": {
+                    "Structural Analysis": [
+                        "Beam Analysis", "Truss Analysis", "Frame Analysis", "Influence Lines",
+                        "Deflection Analysis", "Stability Analysis", "Matrix Methods",
+                        "Finite Element Method", "Plastic Analysis", "Dynamic Analysis"
+                    ],
+                    "Reinforced Concrete Design": [
+                        "Flexural Design", "Shear Design", "Column Design", "Footing Design",
+                        "Slab Design", "Beam Design", "Detailing", "Durability", "Serviceability",
+                        "Code Provisions"
+                    ]
+                }
+            }
         }
     
-    def get_response(self, user_input):
-        user_input = user_input.lower().strip()
+    def populate_database(self):
+        """Automatically populate database with engineering subjects and topics"""
+        conn = sqlite3.connect('user_data.db')
+        cursor = conn.cursor()
         
-        # Add to conversation history
-        self.conversation_history.append({"role": "user", "content": user_input})
+        # Create subjects table if not exists
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS subjects (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                branch TEXT NOT NULL,
+                subject_name TEXT NOT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        ''')
         
-        # Generate AI response based on input
-        response = self.generate_ai_response(user_input)
+        # Create topics table if not exists
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS topics (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                subject_id INTEGER,
+                topic_name TEXT NOT NULL,
+                difficulty_level TEXT DEFAULT 'Medium',
+                bloom_level TEXT DEFAULT 'Understanding',
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (subject_id) REFERENCES subjects (id)
+            )
+        ''')
         
-        # Add response to history
-        self.conversation_history.append({"role": "assistant", "content": response})
+        # Create exam_patterns table if not exists
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS exam_patterns (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                subject_id INTEGER,
+                pattern_name TEXT NOT NULL,
+                total_questions INTEGER,
+                mcq_count INTEGER,
+                short_answer_count INTEGER,
+                long_answer_count INTEGER,
+                case_study_count INTEGER,
+                time_duration INTEGER,
+                marks_per_question REAL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (subject_id) REFERENCES subjects (id)
+            )
+        ''')
         
-        return response
+        # Populate subjects and topics
+        for branch, data in self.engineering_subjects.items():
+            for subject in data["subjects"]:
+                # Insert subject
+                cursor.execute('''
+                    INSERT OR IGNORE INTO subjects (branch, subject_name) 
+                    VALUES (?, ?)
+                ''', (branch, subject))
+                
+                subject_id = cursor.lastrowid
+                if subject_id == 0:  # If subject already exists, get its ID
+                    cursor.execute('SELECT id FROM subjects WHERE branch = ? AND subject_name = ?', (branch, subject))
+                    subject_id = cursor.fetchone()[0]
+                
+                # Insert topics if available
+                if subject in data.get("exam_topics", {}):
+                    for topic in data["exam_topics"][subject]:
+                        cursor.execute('''
+                            INSERT OR IGNORE INTO topics (subject_id, topic_name) 
+                            VALUES (?, ?)
+                        ''', (subject_id, topic))
+        
+        # Insert default exam patterns
+        default_patterns = [
+            ("Mid Semester", 20, 10, 5, 3, 2, 90, 5.0),
+            ("End Semester", 30, 15, 8, 5, 2, 180, 5.0),
+            ("Unit Test", 15, 8, 4, 2, 1, 60, 5.0)
+        ]
+        
+        for pattern_name, total, mcq, short, long, case_study, duration, marks in default_patterns:
+            cursor.execute('''
+                INSERT OR IGNORE INTO exam_patterns 
+                (pattern_name, total_questions, mcq_count, short_answer_count, long_answer_count, case_study_count, time_duration, marks_per_question) 
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            ''', (pattern_name, total, mcq, short, long, case_study, duration, marks))
+        
+        conn.commit()
+        conn.close()
+        
+        return True
     
-    def generate_ai_response(self, user_input):
-        # Greeting patterns
-        if any(word in user_input for word in ["hello", "hi", "hey", "greetings"]):
-            return "👋 Hello! I'm QuestVibe AI, your intelligent assistant for question paper generation. How can I help you today? You can ask me about features, subjects, question types, or request help with generating questions!"
+    def get_subjects_by_branch(self, branch):
+        """Get all subjects for a specific engineering branch"""
+        conn = sqlite3.connect('user_data.db')
+        cursor = conn.cursor()
         
-        # Help patterns
-        elif any(word in user_input for word in ["help", "assist", "support", "guide"]):
-            return """🤖 **QuestVibe AI Assistant - How I Can Help You:**
-
-**📚 Question Generation:**
-- "Generate questions for Database Management"
-- "Create 20 MCQs for Big Data"
-- "Make questions about Computer Networks"
-
-**📖 Information:**
-- "What subjects are available?"
-- "Explain question types"
-- "Show QuestVibe features"
-
-**🛠️ System Help:**
-- "How to use auto generation?"
-- "How to upload syllabus?"
-- "How to analyze patterns?"
-
-**💬 General:**
-- "Hello" - Greeting
-- "Clear" - Reset conversation
-- "Help" - This message
-
-What would you like to know about? 🚀"""
+        cursor.execute('''
+            SELECT subject_name FROM subjects 
+            WHERE branch = ? 
+            ORDER BY subject_name
+        ''', (branch,))
         
-        # Subject queries
-        elif any(word in user_input for word in ["subject", "subjects", "topics", "available"]):
-            return """📚 **Available Subjects in QuestVibe:**
-
-1. **Database Management System**
-   - Introduction to DBMS
-   - ER Model and Relational Model
-   - SQL and Normalization
-   - Transaction Management
-   - Database Security
-
-2. **Big Data Fundamentals**
-   - Introduction to Big Data
-   - Hadoop Ecosystem
-   - MapReduce and HDFS
-   - NoSQL Databases
-   - Big Data Analytics
-
-3. **Computer Networks**
-   - Network Fundamentals
-   - OSI Model and TCP/IP
-   - Network Protocols
-   - Network Security
-   - Wireless Networks
-
-Which subject would you like to generate questions for? 🎯"""
-        
-        # Question types
-        elif any(word in user_input for word in ["question type", "types", "mcq", "short answer", "long answer", "case study"]):
-            return """📝 **Question Types in QuestVibe:**
-
-1. **MCQ (Multiple Choice Questions)**
-   - 4 options (A, B, C, D)
-   - Perfect for testing knowledge
-   - Quick to answer and grade
-
-2. **Short Answer**
-   - Brief explanations
-   - Definitions and concepts
-   - 2-3 sentence responses
-
-3. **Long Answer**
-   - Detailed explanations
-   - Analysis and discussion
-   - Comprehensive responses
-
-4. **Case Study**
-   - Real-world scenarios
-   - Problem-solving questions
-   - Practical applications
-
-Each type tests different cognitive levels according to Bloom's Taxonomy! 🧠"""
-        
-        # Generate questions
-        elif any(word in user_input for word in ["generate", "create", "make", "questions"]):
-            subject = self.extract_subject(user_input)
-            num_questions = self.extract_number(user_input)
-            question_types = self.extract_question_types(user_input)
-            
-            if subject:
-                return f"""🚀 **Question Generation Request:**
-
-**Subject:** {subject}
-**Number of Questions:** {num_questions or 'Default (20)'}
-**Question Types:** {', '.join(question_types) if question_types else 'All types'}
-
-To generate these questions:
-1. Go to the main dashboard
-2. Click "Start Auto Generation"
-3. Select "{subject}" from the dropdown
-4. Choose your question types
-5. Click "Generate Questions"
-
-I'll help you create comprehensive questions based on your requirements! 📚"""
-            else:
-                return "Please specify a subject! Available subjects: Database Management System, Big Data Fundamentals, Computer Networks. Example: 'Generate 15 MCQs for Database Management'"
-        
-        # Features
-        elif any(word in user_input for word in ["feature", "features", "what can", "capabilities"]):
-            return """✨ **QuestVibe Features:**
-
-🤖 **Auto Generation**
-- Generate questions from predefined topics
-- Multiple subjects available
-- Customizable question types and counts
-
-📝 **Manual Creation**
-- Upload syllabus files (PDF, DOCX, TXT)
-- Paste syllabus text directly
-- Create custom question papers
-
-📊 **Pattern Analysis**
-- Analyze past question papers
-- Understand exam patterns
-- Get insights and trends
-
-🗄️ **Database Tracking**
-- All activities are logged
-- User session tracking
-- Generation history
-
-🎯 **Multiple Question Types**
-- MCQ, Short Answer, Long Answer, Case Study
-- Bloom's Taxonomy integration
-- Difficulty level control
-
-📈 **Analytics & Reports**
-- Usage statistics
-- Performance metrics
-- Export capabilities
-
-What feature would you like to explore? 🚀"""
-        
-        # Clear conversation
-        elif any(word in user_input for word in ["clear", "reset", "new", "start over"]):
-            self.conversation_history = []
-            return "🧹 Conversation cleared! How can I help you with QuestVibe today?"
-        
-        # Default response
-        else:
-            return """🤖 I'm not sure I understood that. Here are some things I can help you with:
-
-• **Generate questions** for specific subjects
-• **Explain features** of QuestVibe
-• **List available subjects** and topics
-• **Describe question types** and their uses
-• **Provide guidance** on using the system
-
-Try asking: "What subjects are available?" or "Generate questions for Database Management" or "Help" for more options! 🚀"""
+        subjects = [row[0] for row in cursor.fetchall()]
+        conn.close()
+        return subjects
     
-    def extract_subject(self, text):
-        subjects = {
-            "database": "Database Management System",
-            "dbms": "Database Management System",
-            "big data": "Big Data Fundamentals",
-            "hadoop": "Big Data Fundamentals",
-            "computer network": "Computer Networks",
-            "networks": "Computer Networks",
-            "network": "Computer Networks"
-        }
+    def get_topics_by_subject(self, subject_name):
+        """Get all topics for a specific subject"""
+        conn = sqlite3.connect('user_data.db')
+        cursor = conn.cursor()
         
-        for key, subject in subjects.items():
-            if key in text.lower():
-                return subject
-        return None
+        cursor.execute('''
+            SELECT t.topic_name FROM topics t
+            JOIN subjects s ON t.subject_id = s.id
+            WHERE s.subject_name = ?
+            ORDER BY t.topic_name
+        ''', (subject_name,))
+        
+        topics = [row[0] for row in cursor.fetchall()]
+        conn.close()
+        return topics
     
-    def extract_number(self, text):
-        import re
-        numbers = re.findall(r'\d+', text)
-        if numbers:
-            return int(numbers[0])
-        return None
-    
-    def extract_question_types(self, text):
-        types = []
-        if "mcq" in text.lower():
-            types.append("MCQ")
-        if "short" in text.lower():
-            types.append("Short Answer")
-        if "long" in text.lower():
-            types.append("Long Answer")
-        if "case" in text.lower():
-            types.append("Case Study")
-        return types
+    def get_exam_patterns(self):
+        """Get all available exam patterns"""
+        conn = sqlite3.connect('user_data.db')
+        cursor = conn.cursor()
+        
+        cursor.execute('SELECT * FROM exam_patterns ORDER BY pattern_name')
+        patterns = cursor.fetchall()
+        conn.close()
+        return patterns
 
-# Initialize AI
-if 'questvibe_ai' not in st.session_state:
-    st.session_state.questvibe_ai = QuestVibeAI()
+# Initialize AI Database System
+if 'questvibe_ai_db' not in st.session_state:
+    st.session_state.questvibe_ai_db = QuestVibeAIDatabase()
+    # Automatically populate database on first run
+    st.session_state.questvibe_ai_db.populate_database()
 
 def main():
     if 'authenticated' not in st.session_state:
@@ -959,74 +1036,42 @@ def main():
 
     st.markdown("---")
     
-    # AI Assistant Section
-    st.markdown("### 🤖 QuestVibe AI Assistant")
-    st.write("Ask me anything about QuestVibe, question generation, or get help with using the system!")
+    # AI Database System Information
+    st.markdown("### 🤖 AI Database System")
+    st.write("QuestVibe uses an intelligent AI system that automatically populates the database with comprehensive engineering curriculum data.")
     
-    # Chat interface
-    if 'chat_messages' not in st.session_state:
-        st.session_state.chat_messages = []
-    
-    # Display chat history
-    chat_container = st.container()
-    with chat_container:
-        for message in st.session_state.chat_messages:
-            if message["role"] == "user":
-                st.markdown(f"**👤 You:** {message['content']}")
-            else:
-                st.markdown(f"**🤖 QuestVibe AI:** {message['content']}")
-    
-    # Chat input
-    with st.form("chat_form"):
-        col1, col2 = st.columns([4, 1])
-        with col1:
-            user_message = st.text_input("💬 Ask QuestVibe AI:", placeholder="e.g., 'Generate questions for Database Management' or 'Help'")
-        with col2:
-            send_button = st.form_submit_button("🚀 Send", type="primary")
-        
-        if send_button and user_message.strip():
-            # Add user message to chat
-            st.session_state.chat_messages.append({"role": "user", "content": user_message})
-            
-            # Get AI response
-            ai_response = st.session_state.questvibe_ai.get_response(user_message)
-            st.session_state.chat_messages.append({"role": "assistant", "content": ai_response})
-            
-            st.rerun()
-    
-    # Quick action buttons
-    st.markdown("**💡 Quick Actions:**")
+    # Show AI database statistics
     col1, col2, col3, col4 = st.columns(4)
     
     with col1:
-        if st.button("📚 Subjects", key="subjects_btn"):
-            st.session_state.chat_messages.append({"role": "user", "content": "What subjects are available?"})
-            ai_response = st.session_state.questvibe_ai.get_response("What subjects are available?")
-            st.session_state.chat_messages.append({"role": "assistant", "content": ai_response})
-            st.rerun()
+        total_branches = len(st.session_state.questvibe_ai_db.engineering_subjects)
+        st.metric("Engineering Branches", total_branches, "🏗️")
     
     with col2:
-        if st.button("📝 Question Types", key="types_btn"):
-            st.session_state.chat_messages.append({"role": "user", "content": "Explain question types"})
-            ai_response = st.session_state.questvibe_ai.get_response("Explain question types")
-            st.session_state.chat_messages.append({"role": "assistant", "content": ai_response})
-            st.rerun()
+        total_subjects = sum(len(data["subjects"]) for data in st.session_state.questvibe_ai_db.engineering_subjects.values())
+        st.metric("Total Subjects", total_subjects, "📚")
     
     with col3:
-        if st.button("✨ Features", key="features_btn"):
-            st.session_state.chat_messages.append({"role": "user", "content": "Show QuestVibe features"})
-            ai_response = st.session_state.questvibe_ai.get_response("Show QuestVibe features")
-            st.session_state.chat_messages.append({"role": "assistant", "content": ai_response})
-            st.rerun()
+        total_topics = sum(len(topics) for branch_data in st.session_state.questvibe_ai_db.engineering_subjects.values() 
+                          for topics in branch_data.get("exam_topics", {}).values())
+        st.metric("Exam Topics", total_topics, "🎯")
     
     with col4:
-        if st.button("🧹 Clear Chat", key="clear_btn"):
-            st.session_state.chat_messages = []
-            st.session_state.questvibe_ai.conversation_history = []
-            st.rerun()
+        st.metric("AI Status", "Active", "🤖")
+    
+    # Show available branches
+    st.markdown("**🏗️ Available Engineering Branches:**")
+    branch_cols = st.columns(3)
+    branches = list(st.session_state.questvibe_ai_db.engineering_subjects.keys())
+    
+    for i, branch in enumerate(branches):
+        with branch_cols[i % 3]:
+            st.markdown(f"• **{branch}**")
+            subject_count = len(st.session_state.questvibe_ai_db.engineering_subjects[branch]["subjects"])
+            st.write(f"  {subject_count} subjects")
     
     st.markdown("---")
-    
+
     # Admin section
     if st.session_state.current_user and st.session_state.current_user.get('role') == 'admin':
         st.markdown("### 🔧 Admin Tools")
@@ -1056,28 +1101,21 @@ def main():
 
 def auto_generation_page():
     st.markdown("## 🤖 Auto Question Generation")
-    st.write("Generate questions automatically from predefined syllabus topics")
+    st.write("Generate questions automatically from AI-populated engineering subjects and topics")
     
-    # Sample syllabus topics
-    SYLLABUS_TOPICS = {
-        "Database Management System": [
-            "Introduction to DBMS", "ER Model", "Relational Model", "SQL", "Normalization",
-            "Transaction Management", "Concurrency Control", "Database Security"
-        ],
-        "Big Data Fundamentals": [
-            "Introduction to Big Data", "Hadoop Ecosystem", "MapReduce", "HDFS",
-            "NoSQL Databases", "Data Processing", "Big Data Analytics"
-        ],
-        "Computer Networks": [
-            "Network Fundamentals", "OSI Model", "TCP/IP", "Network Protocols",
-            "Network Security", "Wireless Networks", "Network Management"
-        ]
-    }
+    # Get engineering branches from AI database
+    engineering_branches = list(st.session_state.questvibe_ai_db.engineering_subjects.keys())
     
     col1, col2 = st.columns(2)
     
     with col1:
-        subject = st.selectbox("📚 Select Subject", list(SYLLABUS_TOPICS.keys()))
+        # Select engineering branch
+        selected_branch = st.selectbox("🏗️ Select Engineering Branch", engineering_branches)
+        
+        # Get subjects for selected branch
+        subjects = st.session_state.questvibe_ai_db.get_subjects_by_branch(selected_branch)
+        subject = st.selectbox("📚 Select Subject", subjects)
+        
         num_questions = st.slider("📝 Number of Questions", 5, 50, 20)
     
     with col2:
@@ -1086,9 +1124,19 @@ def auto_generation_page():
             ["MCQ", "Short Answer", "Long Answer", "Case Study"],
             default=["MCQ", "Short Answer"]
         )
+        
+        # Show available topics for selected subject
+        if subject:
+            topics = st.session_state.questvibe_ai_db.get_topics_by_subject(subject)
+            if topics:
+                st.markdown("**📖 Available Topics:**")
+                for topic in topics[:5]:  # Show first 5 topics
+                    st.write(f"• {topic}")
+                if len(topics) > 5:
+                    st.write(f"*... and {len(topics) - 5} more topics*")
     
     if st.button("🚀 Generate Questions", type="primary"):
-        with st.spinner("🤖 Generating questions..."):
+        with st.spinner("🤖 AI is generating questions from database..."):
             # Log the generation activity to database
             if st.session_state.current_user:
                 log_question_generation(
@@ -1098,8 +1146,12 @@ def auto_generation_page():
                     question_types
                 )
             
-            # Simulate question generation
-            topics = SYLLABUS_TOPICS[subject]
+            # Get topics from AI database
+            topics = st.session_state.questvibe_ai_db.get_topics_by_subject(subject)
+            if not topics:
+                # Fallback to hardcoded topics if none in database
+                topics = ["Introduction", "Basic Concepts", "Advanced Topics", "Applications", "Case Studies"]
+            
             questions = []
             
             for i in range(num_questions):
@@ -1114,7 +1166,8 @@ def auto_generation_page():
                     question = f"{i+1}. Explain {topic} in detail. ({q_type})"
                     questions.append({"type": q_type, "question": question})
             
-            st.success(f"✅ Generated {len(questions)} questions!")
+            st.success(f"✅ Generated {len(questions)} questions from AI database!")
+            st.info(f"🤖 AI used {len(topics)} topics from {selected_branch} - {subject}")
             if st.session_state.current_user:
                 st.info(f"📊 Activity logged for {st.session_state.current_user['name']} from {st.session_state.current_user['institution']}")
             
