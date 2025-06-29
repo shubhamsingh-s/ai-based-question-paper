@@ -30,12 +30,13 @@ st.markdown("""
 
 /* Container background with glass effect */
 .main .block-container {
-    background: rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.95);
     backdrop-filter: blur(10px);
     border-radius: 20px;
     padding: 2rem;
     margin: 1rem;
     border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.1);
 }
 
 h1 {
@@ -82,7 +83,7 @@ h1 {
 }
 
 div[data-testid="column"] {
-    background: rgba(255, 255, 255, 0.95) !important;
+    background: rgba(255, 255, 255, 0.98) !important;
     border-radius: 20px !important;
     padding: 2rem !important;
     margin: 1rem 0.5rem !important;
@@ -120,28 +121,129 @@ div[data-testid="metric-container"] {
 /* Text color adjustments for better readability */
 p, h2, h3, h4, h5, h6 {
     color: #2c3e50 !important;
+    font-weight: 500 !important;
+}
+
+/* Make all text containers have white background */
+div[data-testid="stMarkdown"] {
+    background: rgba(255, 255, 255, 0.95) !important;
+    padding: 1rem !important;
+    border-radius: 10px !important;
+    margin: 0.5rem 0 !important;
 }
 
 /* Streamlit elements background */
 .stTextInput > div > div > input {
-    background: rgba(255, 255, 255, 0.9) !important;
+    background: rgba(255, 255, 255, 0.95) !important;
     border-radius: 10px !important;
+    border: 2px solid #e0e0e0 !important;
 }
 
 .stSelectbox > div > div > div {
-    background: rgba(255, 255, 255, 0.9) !important;
+    background: rgba(255, 255, 255, 0.95) !important;
     border-radius: 10px !important;
+    border: 2px solid #e0e0e0 !important;
 }
 
 .stSlider > div > div > div > div {
-    background: rgba(255, 255, 255, 0.9) !important;
+    background: rgba(255, 255, 255, 0.95) !important;
 }
 
 /* Success and info boxes */
 .stAlert {
-    background: rgba(255, 255, 255, 0.95) !important;
+    background: rgba(255, 255, 255, 0.98) !important;
     border-radius: 15px !important;
     backdrop-filter: blur(10px) !important;
+    border: 2px solid #e0e0e0 !important;
+}
+
+/* Make expandable sections more visible */
+.streamlit-expanderHeader {
+    background: rgba(255, 255, 255, 0.95) !important;
+    border-radius: 10px !important;
+    padding: 1rem !important;
+    margin: 0.5rem 0 !important;
+    border: 2px solid #e0e0e0 !important;
+}
+
+.streamlit-expanderContent {
+    background: rgba(255, 255, 255, 0.95) !important;
+    border-radius: 10px !important;
+    padding: 1rem !important;
+    margin: 0.5rem 0 !important;
+    border: 2px solid #e0e0e0 !important;
+}
+
+/* Make tabs more visible */
+.stTabs [data-baseweb="tab-list"] {
+    background: rgba(255, 255, 255, 0.95) !important;
+    border-radius: 10px !important;
+    padding: 0.5rem !important;
+    margin: 0.5rem 0 !important;
+}
+
+.stTabs [data-baseweb="tab"] {
+    background: rgba(255, 255, 255, 0.95) !important;
+    border-radius: 8px !important;
+    margin: 0.2rem !important;
+}
+
+/* Make file uploader more visible */
+.stFileUploader {
+    background: rgba(255, 255, 255, 0.95) !important;
+    border-radius: 15px !important;
+    padding: 1rem !important;
+    border: 2px solid #e0e0e0 !important;
+}
+
+/* Make text areas more visible */
+.stTextArea textarea {
+    background: rgba(255, 255, 255, 0.95) !important;
+    border-radius: 10px !important;
+    border: 2px solid #e0e0e0 !important;
+}
+
+/* Make multiselect more visible */
+.stMultiSelect > div > div > div {
+    background: rgba(255, 255, 255, 0.95) !important;
+    border-radius: 10px !important;
+    border: 2px solid #e0e0e0 !important;
+}
+
+/* Ensure all text is readable */
+* {
+    color: #2c3e50 !important;
+}
+
+/* Make links more visible */
+a {
+    color: #3498db !important;
+    font-weight: 600 !important;
+}
+
+/* Make success/error messages more visible */
+.stSuccess {
+    background: rgba(46, 204, 113, 0.1) !important;
+    border: 2px solid #2ecc71 !important;
+    color: #27ae60 !important;
+}
+
+.stError {
+    background: rgba(231, 76, 60, 0.1) !important;
+    border: 2px solid #e74c3c !important;
+    color: #c0392b !important;
+}
+
+.stWarning {
+    background: rgba(241, 196, 15, 0.1) !important;
+    border: 2px solid #f1c40f !important;
+    color: #f39c12 !important;
+}
+
+.stInfo {
+    background: rgba(52, 152, 219, 0.1) !important;
+    border: 2px solid #3498db !important;
+    color: #2980b9 !important;
 }
 </style>
 """, unsafe_allow_html=True)
