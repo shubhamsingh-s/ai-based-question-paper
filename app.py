@@ -8,7 +8,7 @@ import re
 
 # Page configuration
 st.set_page_config(
-    page_title="Question Paper Maker",
+    page_title="QuestVibe",
     page_icon="📚",
     layout="wide"
 )
@@ -1034,7 +1034,7 @@ def main():
             return
         
         st.markdown("""
-        # Welcome to Question Paper Maker!
+        # Welcome to QuestVibe!
 
         This intelligent system helps you create comprehensive question papers based on your syllabus topics.
         """)
