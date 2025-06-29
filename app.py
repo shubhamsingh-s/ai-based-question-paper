@@ -200,28 +200,89 @@ SAMPLE_PAST_PAPERS = {
 
 def extract_topics_from_text(text):
     """Extract potential topics from uploaded/pasted text"""
-    # Simple topic extraction - look for capitalized phrases
+    # Improved topic extraction with better pattern matching
     lines = text.split('\n')
     topics = []
     
+    # Common patterns for syllabus topics
+    patterns = [
+        r'^\d+\.\s*(.+)$',  # 1. Topic Name
+        r'^[A-Z][A-Z\s]+$',  # ALL CAPS TOPICS
+        r'^[A-Z][a-z\s]+:$',  # Topic: format
+        r'^Chapter\s+\d+[:\s]+(.+)$',  # Chapter 1: Topic
+        r'^Unit\s+\d+[:\s]+(.+)$',  # Unit 1: Topic
+        r'^Module\s+\d+[:\s]+(.+)$',  # Module 1: Topic
+        r'^[A-Z][a-z\s]{3,}$',  # Proper case topics with 3+ chars
+    ]
+    
     for line in lines:
         line = line.strip()
-        if len(line) > 10 and line[0].isupper():
-            # Remove common words and punctuation
-            clean_line = re.sub(r'[^\w\s]', '', line)
-            if len(clean_line.split()) >= 2:
-                topics.append(line)
+        if len(line) < 5:  # Skip very short lines
+            continue
+            
+        # Check each pattern
+        for pattern in patterns:
+            match = re.match(pattern, line)
+            if match:
+                topic = match.group(1) if len(match.groups()) > 0 else line
+                # Clean up the topic
+                topic = re.sub(r'[^\w\s\-]', '', topic).strip()
+                if len(topic) > 3 and topic not in topics:
+                    topics.append(topic)
+                break
     
-    return topics[:20]  # Limit to 20 topics
+    # If no patterns match, try to extract meaningful phrases
+    if not topics:
+        words = text.split()
+        for i in range(len(words) - 2):
+            phrase = ' '.join(words[i:i+3])
+            if len(phrase) > 10 and phrase[0].isupper():
+                clean_phrase = re.sub(r'[^\w\s]', '', phrase).strip()
+                if len(clean_phrase) > 5 and clean_phrase not in topics:
+                    topics.append(clean_phrase)
+    
+    return topics[:15]  # Limit to 15 topics
 
-def generate_questions_from_topics(topics, num_questions, question_types):
-    """Generate questions from custom topics"""
+def generate_questions_from_topics(topics, num_questions, question_types, subject="Custom Subject"):
+    """Generate questions from custom topics with better context"""
     if not topics:
         return []
     
     questions = []
     questions_per_type = num_questions // len(question_types)
     remaining = num_questions % len(question_types)
+    
+    # Enhanced question templates for better context
+    enhanced_templates = {
+        "MCQ": [
+            "Which of the following best describes {topic} in {subject}?",
+            "What is the primary purpose of {topic} in the context of {subject}?",
+            "Which statement is true about {topic}?",
+            "In {subject}, what does {topic} represent?",
+            "Which approach is most commonly used for {topic} in {subject}?"
+        ],
+        "Short Answer": [
+            "Explain the concept of {topic} in {subject}.",
+            "Describe the key components of {topic}.",
+            "What are the main advantages of {topic} in {subject}?",
+            "How does {topic} work in {subject}?",
+            "List the important features of {topic}."
+        ],
+        "Long Answer": [
+            "Discuss {topic} in detail with examples and applications in {subject}.",
+            "Analyze the importance of {topic} in {subject}.",
+            "Compare and contrast different approaches to {topic} in {subject}.",
+            "Explain the implementation and challenges of {topic} in {subject}.",
+            "Describe the evolution and future trends of {topic} in {subject}."
+        ],
+        "Case Study": [
+            "Consider a scenario where {topic} needs to be implemented in {subject}. What would be your approach?",
+            "Analyze a real-world problem that can be solved using {topic} in {subject}.",
+            "Design a solution using {topic} for a given {subject} requirement.",
+            "Evaluate the effectiveness of {topic} in {subject}.",
+            "Propose improvements to an existing {topic} implementation in {subject}."
+        ]
+    }
     
     for qtype in question_types:
         count = questions_per_type + (1 if remaining > 0 else 0)
@@ -234,8 +295,8 @@ def generate_questions_from_topics(topics, num_questions, question_types):
             selected_topics.extend(additional_topics)
         
         for topic in selected_topics[:count]:
-            templates = QUESTION_TEMPLATES.get(qtype, [f"Describe {topic}."])
-            question_text = random.choice(templates).format(topic=topic)
+            templates = enhanced_templates.get(qtype, [f"Describe {topic} in {subject}."])
+            question_text = random.choice(templates).format(topic=topic, subject=subject)
             
             marks_map = {"MCQ": 1, "Short Answer": 3, "Long Answer": 8, "Case Study": 10}
             marks = marks_map.get(qtype, 5)
@@ -375,7 +436,7 @@ def manual_creation_page():
         syllabus_text = st.text_area(
             "Paste your syllabus content here",
             height=200,
-            placeholder="Paste your syllabus topics, chapters, or content here..."
+            placeholder="Paste your syllabus topics, chapters, or content here...\n\nExample formats:\n1. Database Design\n2. SQL Queries\nChapter 1: Introduction\nUnit 2: Advanced Topics"
         )
     
     if syllabus_text:
@@ -384,11 +445,31 @@ def manual_creation_page():
         
         st.markdown("### 🎯 Extracted Topics")
         if extracted_topics:
-            st.write(f"Found {len(extracted_topics)} potential topics:")
+            st.success(f"✅ Successfully extracted {len(extracted_topics)} topics from your syllabus!")
+            st.write("**Topics found:**")
             for i, topic in enumerate(extracted_topics, 1):
-                st.write(f"{i}. {topic}")
+                st.write(f"{i}. **{topic}**")
+            
+            # Allow user to edit topics
+            st.markdown("### ✏️ Edit Topics (Optional)")
+            st.info("You can edit the extracted topics below if needed:")
+            
+            edited_topics = []
+            for i, topic in enumerate(extracted_topics):
+                edited_topic = st.text_input(f"Topic {i+1}", value=topic, key=f"topic_{i}")
+                if edited_topic.strip():
+                    edited_topics.append(edited_topic.strip())
+            
+            # Use edited topics if provided, otherwise use extracted ones
+            final_topics = edited_topics if edited_topics else extracted_topics
+            
         else:
-            st.warning("No topics could be extracted. Please check your text format.")
+            st.warning("⚠️ No topics could be extracted automatically. Please check your text format.")
+            st.info("**Tips for better topic extraction:**")
+            st.write("• Use numbered lists: 1. Topic Name")
+            st.write("• Use chapter format: Chapter 1: Topic Name")
+            st.write("• Use unit format: Unit 1: Topic Name")
+            st.write("• Use proper capitalization: Topic Name")
             return
         
         st.markdown("### ⚙️ Question Generation Settings")
@@ -404,19 +485,23 @@ def manual_creation_page():
         
         with col2:
             difficulty = st.selectbox("Difficulty Level", ['Easy', 'Medium', 'Hard', 'Mixed'])
-            exam_title = st.text_input("Exam Title", "Custom Generated Paper")
+            subject = st.text_input("Subject Name", value="Custom Subject", help="Enter the subject name (e.g., Database Management, Computer Networks)")
         
         with col3:
             duration = st.number_input("Duration (minutes)", 60, 300, 180)
-            subject = st.text_input("Subject", "Custom Subject")
+            exam_title = st.text_input("Exam Title", value=f"{subject} - Custom Generated Paper")
         
         if st.button("🚀 Generate Questions from Syllabus", type="primary"):
             if not question_types:
                 st.error("Please select at least one question type!")
                 return
             
+            if not subject.strip():
+                st.error("Please enter a subject name!")
+                return
+            
             with st.spinner("🤖 Generating questions from your syllabus..."):
-                questions = generate_questions_from_topics(extracted_topics, total_questions, question_types)
+                questions = generate_questions_from_topics(final_topics, total_questions, question_types, subject)
                 analysis = analyze_questions(questions)
                 
                 st.success("✅ Questions generated successfully!")
@@ -425,11 +510,13 @@ def manual_creation_page():
                 st.markdown(f"**{exam_title}**")
                 st.markdown(f"**Subject:** {subject} | **Total Marks:** {analysis.get('total_marks', 0)} | **Duration:** {duration} minutes")
                 st.markdown(f"**Generated on:** {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+                st.markdown(f"**Topics covered:** {len(final_topics)} topics from your syllabus")
                 
                 st.subheader("📝 Questions")
                 for i, question in enumerate(questions, 1):
                     with st.expander(f"Q{i} ({question['type']}, {question['topic']}, {question['marks']} marks, {question['bloom_level']})"):
                         st.write(f"**Question:** {question['question']}")
+                        st.write(f"**Topic:** {question['topic']}")
                         st.write(f"**Bloom's Level:** {question['bloom_level']}")
                 
                 st.subheader("📊 Analytics")
@@ -452,13 +539,19 @@ def manual_creation_page():
                 col1, col2, col3 = st.columns(3)
                 
                 with col1:
-                    export_text = f"{exam_title}\nSubject: {subject}\nTotal Marks: {analysis.get('total_marks', 0)}\nDuration: {duration} minutes\n\n"
+                    export_text = f"{exam_title}\nSubject: {subject}\nTotal Marks: {analysis.get('total_marks', 0)}\nDuration: {duration} minutes\nTopics: {', '.join(final_topics)}\n\n"
                     for i, q in enumerate(questions, 1):
                         export_text += f"Q{i} ({q['type']}, {q['marks']} marks): {q['question']}\n\n"
                     st.download_button('📄 Download as Text', export_text, file_name=f'{subject}_question_paper.txt', mime='text/plain')
                 
                 with col2:
-                    export_data = {'exam_title': exam_title, 'subject': subject, 'questions': questions, 'analysis': analysis}
+                    export_data = {
+                        'exam_title': exam_title, 
+                        'subject': subject, 
+                        'topics': final_topics,
+                        'questions': questions, 
+                        'analysis': analysis
+                    }
                     st.download_button('📊 Download as JSON', json.dumps(export_data, indent=2), file_name=f'{subject}_question_paper.json', mime='application/json')
                 
                 with col3:
