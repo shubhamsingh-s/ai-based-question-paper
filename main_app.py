@@ -1,6 +1,8 @@
 import streamlit as st
 import pandas as pd
 import plotly.express as px
+import os
+import tempfile
 import random
 import json
 from datetime import datetime
@@ -15,6 +17,19 @@ st.set_page_config(
 # Custom CSS for enhanced styling
 st.markdown("""
 <style>
+/* Main styling */
+.main {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+}
+
+/* Header styling */
+.main .block-container {
+    padding-top: 2rem;
+    padding-bottom: 2rem;
+}
+
+/* Custom title styling */
 h1 {
     background: linear-gradient(45deg, #FF6B6B, #4ECDC4, #45B7D1, #96CEB4);
     background-size: 300% 300%;
@@ -26,6 +41,7 @@ h1 {
     font-size: 3.5rem !important;
     font-weight: 800 !important;
     margin-bottom: 2rem !important;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
 }
 
 @keyframes gradient {
@@ -34,6 +50,22 @@ h1 {
     100% { background-position: 0% 50%; }
 }
 
+/* Subtitle styling */
+h2 {
+    color: #2c3e50 !important;
+    font-weight: 600 !important;
+    border-left: 4px solid #3498db;
+    padding-left: 1rem;
+    margin-top: 2rem !important;
+}
+
+h3 {
+    color: #34495e !important;
+    font-weight: 600 !important;
+    margin-top: 1.5rem !important;
+}
+
+/* Card styling */
 .stButton > button {
     background: linear-gradient(45deg, #667eea, #764ba2) !important;
     color: white !important;
@@ -41,15 +73,19 @@ h1 {
     border-radius: 15px !important;
     padding: 0.75rem 2rem !important;
     font-weight: 600 !important;
+    font-size: 1.1rem !important;
     transition: all 0.3s ease !important;
     box-shadow: 0 4px 15px rgba(0,0,0,0.2) !important;
+    margin: 0.5rem 0 !important;
 }
 
 .stButton > button:hover {
     transform: translateY(-2px) !important;
     box-shadow: 0 6px 20px rgba(0,0,0,0.3) !important;
+    background: linear-gradient(45deg, #764ba2, #667eea) !important;
 }
 
+/* Primary button styling */
 .stButton > button[data-baseweb="button"] {
     background: linear-gradient(45deg, #FF6B6B, #4ECDC4) !important;
     font-size: 1.2rem !important;
@@ -57,12 +93,20 @@ h1 {
     border-radius: 25px !important;
 }
 
+.stButton > button[data-baseweb="button"]:hover {
+    background: linear-gradient(45deg, #4ECDC4, #FF6B6B) !important;
+    transform: translateY(-3px) !important;
+    box-shadow: 0 8px 25px rgba(0,0,0,0.3) !important;
+}
+
+/* Feature cards styling */
 div[data-testid="column"] {
     background: rgba(255, 255, 255, 0.95) !important;
     border-radius: 20px !important;
     padding: 2rem !important;
     margin: 1rem 0.5rem !important;
     box-shadow: 0 8px 32px rgba(0,0,0,0.1) !important;
+    backdrop-filter: blur(10px) !important;
     border: 1px solid rgba(255, 255, 255, 0.2) !important;
     transition: all 0.3s ease !important;
 }
@@ -72,6 +116,7 @@ div[data-testid="column"]:hover {
     box-shadow: 0 12px 40px rgba(0,0,0,0.15) !important;
 }
 
+/* Metric styling */
 div[data-testid="metric-container"] {
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
     border-radius: 15px !important;
@@ -82,6 +127,7 @@ div[data-testid="metric-container"] {
     margin: 0.5rem 0 !important;
 }
 
+/* Footer styling */
 .footer {
     background: linear-gradient(135deg, #2c3e50, #34495e) !important;
     color: white !important;
@@ -95,33 +141,66 @@ div[data-testid="metric-container"] {
 """, unsafe_allow_html=True)
 
 # Initialize session state
+if 'show_question_creation' not in st.session_state:
+    st.session_state.show_question_creation = False
+if 'show_analysis' not in st.session_state:
+    st.session_state.show_analysis = False
 if 'show_auto_generation' not in st.session_state:
     st.session_state.show_auto_generation = False
 
-# Predefined syllabus topics
+# Predefined syllabus topics for different subjects
 SYLLABUS_TOPICS = {
     "Database Management System": [
-        "Database Design and ER Model", "Relational Algebra and SQL", "Normalization and Database Design",
-        "Transaction Management", "Concurrency Control", "Database Security", "Distributed Databases",
-        "Data Warehousing", "Big Data and NoSQL", "Database Administration"
+        "Database Design and ER Model",
+        "Relational Algebra and SQL",
+        "Normalization and Database Design",
+        "Transaction Management",
+        "Concurrency Control",
+        "Database Security",
+        "Distributed Databases",
+        "Data Warehousing",
+        "Big Data and NoSQL",
+        "Database Administration"
     ],
     "Big Data Fundamentals": [
-        "Introduction to Big Data", "Hadoop Ecosystem", "MapReduce Programming", "HDFS Architecture",
-        "Spark Framework", "Data Processing Pipelines", "Machine Learning with Big Data", "Data Visualization",
-        "Cloud Computing for Big Data", "Big Data Analytics"
+        "Introduction to Big Data",
+        "Hadoop Ecosystem",
+        "MapReduce Programming",
+        "HDFS Architecture",
+        "Spark Framework",
+        "Data Processing Pipelines",
+        "Machine Learning with Big Data",
+        "Data Visualization",
+        "Cloud Computing for Big Data",
+        "Big Data Analytics"
     ],
     "Computer Networks": [
-        "Network Architecture", "OSI Model and TCP/IP", "Network Protocols", "Routing Algorithms",
-        "Network Security", "Wireless Networks", "Network Management", "Internet Technologies",
-        "Network Performance", "Emerging Network Technologies"
+        "Network Architecture",
+        "OSI Model and TCP/IP",
+        "Network Protocols",
+        "Routing Algorithms",
+        "Network Security",
+        "Wireless Networks",
+        "Network Management",
+        "Internet Technologies",
+        "Network Performance",
+        "Emerging Network Technologies"
     ],
     "Operating Systems": [
-        "Process Management", "Memory Management", "File Systems", "CPU Scheduling", "Deadlock Prevention",
-        "Virtual Memory", "Device Management", "System Security", "Distributed Systems", "Real-time Systems"
+        "Process Management",
+        "Memory Management",
+        "File Systems",
+        "CPU Scheduling",
+        "Deadlock Prevention",
+        "Virtual Memory",
+        "Device Management",
+        "System Security",
+        "Distributed Systems",
+        "Real-time Systems"
     ]
 }
 
-# Question templates
+# Question templates for different types
 QUESTION_TEMPLATES = {
     "MCQ": [
         "Which of the following best describes {topic}?",
@@ -153,9 +232,46 @@ QUESTION_TEMPLATES = {
     ]
 }
 
+# Bloom's taxonomy levels
 BLOOM_LEVELS = ["Remember", "Understand", "Apply", "Analyze", "Evaluate", "Create"]
 
-def generate_auto_questions(subject, num_questions, question_types):
+def generate_questions(topics, num_questions, question_types):
+    """Generate questions based on topics and parameters"""
+    questions = []
+    
+    for topic in topics:
+        for qtype in question_types:
+            if qtype == "MCQ":
+                templates = QUESTION_TEMPLATES.get("MCQ", [f"Which of the following best describes {topic}?"])
+                question = random.choice(templates).format(topic=topic)
+                marks = 1
+            elif qtype == "Short Answer":
+                templates = QUESTION_TEMPLATES.get("Short Answer", [f"Explain the concept of {topic}."])
+                question = random.choice(templates).format(topic=topic)
+                marks = 3
+            elif qtype == "Long Answer":
+                templates = QUESTION_TEMPLATES.get("Long Answer", [f"Discuss {topic} in detail with examples."])
+                question = random.choice(templates).format(topic=topic)
+                marks = 8
+            elif qtype == "Case Study":
+                templates = QUESTION_TEMPLATES.get("Case Study", [f"Consider a scenario where {topic} needs to be implemented."])
+                question = random.choice(templates).format(topic=topic)
+                marks = 10
+            else:
+                question = f"Describe {topic}."
+                marks = 5
+            
+            questions.append({
+                'question': question,
+                'type': qtype,
+                'topic': topic,
+                'marks': marks,
+                'bloom_level': random.choice(BLOOM_LEVELS)
+            })
+    
+    return questions[:num_questions]
+
+def generate_auto_questions(subject, num_questions, question_types, difficulty="Mixed"):
     """Generate questions automatically from predefined syllabus"""
     topics = SYLLABUS_TOPICS.get(subject, [])
     if not topics:
@@ -169,26 +285,17 @@ def generate_auto_questions(subject, num_questions, question_types):
         count = questions_per_type + (1 if remaining > 0 else 0)
         remaining -= 1
         
+        # Select topics for this question type
         selected_topics = random.sample(topics, min(count, len(topics)))
         if count > len(topics):
+            # If we need more questions than topics, repeat some topics
             additional_needed = count - len(topics)
             additional_topics = random.choices(topics, k=additional_needed)
             selected_topics.extend(additional_topics)
         
         for topic in selected_topics[:count]:
-            templates = QUESTION_TEMPLATES.get(qtype, [f"Describe {topic}."])
-            question_text = random.choice(templates).format(topic=topic)
-            
-            marks_map = {"MCQ": 1, "Short Answer": 3, "Long Answer": 8, "Case Study": 10}
-            marks = marks_map.get(qtype, 5)
-            
-            questions.append({
-                'question': question_text,
-                'type': qtype,
-                'topic': topic,
-                'marks': marks,
-                'bloom_level': random.choice(BLOOM_LEVELS)
-            })
+            question = generate_questions([topic], 1, [qtype])[0]
+            questions.append(question)
     
     return questions
 
@@ -197,6 +304,7 @@ def analyze_questions(questions):
     if not questions:
         return {}
     
+    # Question type distribution
     type_counts = {}
     topic_counts = {}
     bloom_counts = {}
@@ -224,11 +332,21 @@ def analyze_questions(questions):
 def auto_generation_page():
     st.markdown("## 🤖 Auto Question Generation")
     st.markdown("---")
+    st.markdown("**Fully Automated Question Paper Generation System**")
+    
+    # Auto-generate configuration
+    st.markdown("### ⚙️ Auto Configuration")
     
     col1, col2, col3 = st.columns(3)
     
     with col1:
-        subject = st.selectbox("Select Subject", list(SYLLABUS_TOPICS.keys()), index=0)
+        subject = st.selectbox(
+            "Select Subject",
+            list(SYLLABUS_TOPICS.keys()),
+            index=0
+        )
+        
+        # Show available topics
         topics = SYLLABUS_TOPICS[subject]
         st.markdown(f"**Available Topics:** {len(topics)}")
         with st.expander("View Topics"):
@@ -248,95 +366,176 @@ def auto_generation_page():
         exam_title = st.text_input("Exam Title", f"{subject} - Auto Generated Paper")
         duration = st.number_input("Duration (minutes)", 60, 300, 180)
     
+    # Auto-generate button
     if st.button("🚀 Generate Question Paper Automatically", type="primary"):
         if not question_types:
             st.error("Please select at least one question type!")
             return
         
         with st.spinner("🤖 AI is generating your question paper..."):
-            questions = generate_auto_questions(subject, total_questions, question_types)
+            # Generate questions
+            questions = generate_auto_questions(subject, total_questions, question_types, difficulty)
+            
+            # Analyze questions
             analysis = analyze_questions(questions)
             
             st.success("✅ Question paper generated successfully!")
             
+            # Display generated paper
             st.markdown("## 📄 Generated Question Paper")
             st.markdown(f"**{exam_title}**")
             st.markdown(f"**Subject:** {subject} | **Total Marks:** {analysis.get('total_marks', 0)} | **Duration:** {duration} minutes")
             st.markdown(f"**Generated on:** {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
             
+            # Display questions
             st.subheader("📝 Questions")
             for i, question in enumerate(questions, 1):
                 with st.expander(f"Q{i} ({question['type']}, {question['topic']}, {question['marks']} marks, {question['bloom_level']})"):
                     st.write(f"**Question:** {question['question']}")
                     st.write(f"**Bloom's Level:** {question['bloom_level']}")
             
-            st.subheader("📊 Analytics")
+            # Enhanced Analytics Dashboard
+            st.subheader("📊 Comprehensive Analytics")
+            
             col1, col2 = st.columns(2)
             
             with col1:
+                # Question Type Distribution
                 if analysis.get('type_counts'):
-                    type_df = pd.DataFrame([{'Type': k, 'Count': v} for k, v in analysis['type_counts'].items()])
+                    type_df = pd.DataFrame([
+                        {'Type': k, 'Count': v} for k, v in analysis['type_counts'].items()
+                    ])
                     fig1 = px.pie(type_df, values='Count', names='Type', title='Question Type Distribution')
                     st.plotly_chart(fig1, use_container_width=True)
+                
+                # Bloom's Taxonomy Distribution
+                if analysis.get('bloom_counts'):
+                    bloom_df = pd.DataFrame([
+                        {'Level': k, 'Count': v} for k, v in analysis['bloom_counts'].items()
+                    ])
+                    fig3 = px.bar(bloom_df, x='Level', y='Count', title="Bloom's Taxonomy Distribution")
+                    st.plotly_chart(fig3, use_container_width=True)
             
             with col2:
+                # Topic Distribution
                 if analysis.get('topic_counts'):
-                    topic_df = pd.DataFrame([{'Topic': k, 'Count': v} for k, v in analysis['topic_counts'].items()])
+                    topic_df = pd.DataFrame([
+                        {'Topic': k, 'Count': v} for k, v in analysis['topic_counts'].items()
+                    ])
                     fig2 = px.bar(topic_df, x='Topic', y='Count', title='Topic Distribution')
                     fig2.update_xaxes(tickangle=45)
                     st.plotly_chart(fig2, use_container_width=True)
+                
+                # Summary Statistics
+                st.markdown("### 📈 Summary Statistics")
+                col_a, col_b = st.columns(2)
+                with col_a:
+                    st.metric("Total Questions", analysis.get('total_questions', 0))
+                    st.metric("Total Marks", analysis.get('total_marks', 0))
+                with col_b:
+                    st.metric("Question Types", len(analysis.get('type_counts', {})))
+                    st.metric("Topics Covered", len(analysis.get('topic_counts', {})))
             
+            # Enhanced Export Options
             st.subheader("📤 Export Options")
+            
             col1, col2, col3 = st.columns(3)
             
             with col1:
-                export_text = f"{exam_title}\nSubject: {subject}\nTotal Marks: {analysis.get('total_marks', 0)}\nDuration: {duration} minutes\n\n"
+                # Export as Text
+                export_text = f"{exam_title}\n"
+                export_text += f"Subject: {subject}\n"
+                export_text += f"Total Marks: {analysis.get('total_marks', 0)}\n"
+                export_text += f"Duration: {duration} minutes\n"
+                export_text += f"Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n\n"
+                
                 for i, q in enumerate(questions, 1):
-                    export_text += f"Q{i} ({q['type']}, {q['marks']} marks): {q['question']}\n\n"
-                st.download_button('📄 Download as Text', export_text, file_name=f'{subject}_question_paper.txt', mime='text/plain')
+                    export_text += f"Q{i} ({q['type']}, {q['marks']} marks, {q['bloom_level']}): {q['question']}\n\n"
+                
+                st.download_button(
+                    '📄 Download as Text',
+                    export_text,
+                    file_name=f'{subject}_question_paper.txt',
+                    mime='text/plain'
+                )
             
             with col2:
-                export_data = {'exam_title': exam_title, 'subject': subject, 'questions': questions, 'analysis': analysis}
-                st.download_button('📊 Download as JSON', json.dumps(export_data, indent=2), file_name=f'{subject}_question_paper.json', mime='application/json')
+                # Export as JSON
+                export_data = {
+                    'exam_title': exam_title,
+                    'subject': subject,
+                    'total_marks': analysis.get('total_marks', 0),
+                    'duration': duration,
+                    'generated_at': datetime.now().isoformat(),
+                    'questions': questions,
+                    'analysis': analysis
+                }
+                
+                st.download_button(
+                    '📊 Download as JSON',
+                    json.dumps(export_data, indent=2),
+                    file_name=f'{subject}_question_paper.json',
+                    mime='application/json'
+                )
             
             with col3:
+                # Export as CSV
                 questions_df = pd.DataFrame(questions)
                 csv_data = questions_df.to_csv(index=False)
-                st.download_button('📋 Download as CSV', csv_data, file_name=f'{subject}_questions.csv', mime='text/csv')
+                
+                st.download_button(
+                    '📋 Download as CSV',
+                    csv_data,
+                    file_name=f'{subject}_questions.csv',
+                    mime='text/csv'
+                )
     
+    # Back button
     if st.button("← Back to Home"):
         st.session_state.show_auto_generation = False
         st.rerun()
 
 def main():
+    # Check if we should show auto generation
     if st.session_state.show_auto_generation:
         auto_generation_page()
         return
     
+    # Welcome Section
     st.markdown("""
     # Welcome to Question Paper Maker!
 
     This intelligent system helps you create comprehensive question papers based on your syllabus topics.
     """)
 
+    # Feature Cards
     col1, col2, col3, col4 = st.columns(4)
 
     with col1:
-        st.markdown("### 📚 Syllabus-Based")
-        st.write("Generate questions from your specific syllabus topics")
+        st.markdown("""
+        ### 📚 Syllabus-Based
+        Generate questions from your specific syllabus topics
+        """)
 
     with col2:
-        st.markdown("### 🤖 Auto Generation")
-        st.write("Fully automated question paper creation with predefined topics")
+        st.markdown("""
+        ### 🤖 Auto Generation
+        Fully automated question paper creation with predefined topics
+        """)
 
     with col3:
-        st.markdown("### 🎯 Multiple Types")
-        st.write("Support for MCQ, Short Answer, Long Answer, and Case Study questions")
+        st.markdown("""
+        ### 🎯 Multiple Types
+        Support for MCQ, Short Answer, Long Answer, and Case Study questions
+        """)
 
     with col4:
-        st.markdown("### 📊 Smart Analysis")
-        st.write("Get detailed analytics and visualizations with Bloom's taxonomy")
+        st.markdown("""
+        ### 📊 Smart Analysis
+        Get detailed analytics and visualizations with Bloom's taxonomy
+        """)
 
+    # Navigation Section
     st.markdown("---")
     st.markdown("### 🚀 Get Started")
 
@@ -361,6 +560,7 @@ def main():
         if st.button("Start Analysis", key="analyze_btn"):
             st.info("Pattern analysis feature coming soon!")
 
+    # Quick Stats
     st.markdown("---")
     st.markdown("### 📈 System Overview")
 
@@ -379,6 +579,7 @@ def main():
     with col4:
         st.metric("Bloom's Levels", "6 Levels", "🧠")
 
+    # Footer
     st.markdown("---")
     st.markdown("""
     <div class="footer">
