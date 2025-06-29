@@ -7,6 +7,8 @@ import random
 import json
 from datetime import datetime
 import re
+import sqlite3
+import os
 
 # Page configuration
 st.set_page_config(
@@ -14,6 +16,45 @@ st.set_page_config(
     page_icon="📚",
     layout="wide"
 )
+
+# Database setup
+def init_database():
+    conn = sqlite3.connect('user_data.db')
+    cursor = conn.cursor()
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS users (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT NOT NULL,
+            institution TEXT NOT NULL,
+            role TEXT DEFAULT 'user',
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    ''')
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS sessions (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER,
+            session_start TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            session_end TIMESTAMP,
+            FOREIGN KEY (user_id) REFERENCES users (id)
+        )
+    ''')
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS question_generations (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER,
+            subject TEXT,
+            num_questions INTEGER,
+            question_types TEXT,
+            generated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (user_id) REFERENCES users (id)
+        )
+    ''')
+    conn.commit()
+    conn.close()
+
+# Initialize database
+init_database()
 
 # Custom CSS for enhanced styling
 st.markdown("""
@@ -191,6 +232,118 @@ USERS = {
     "demo": {"password": "demo123", "role": "teacher", "name": "Demo User"}
 }
 
+def save_user_to_database(name, institution):
+    conn = sqlite3.connect('user_data.db')
+    cursor = conn.cursor()
+    cursor.execute('''
+        INSERT INTO users (name, institution, role) 
+        VALUES (?, ?, ?)
+    ''', (name, institution, 'user'))
+    user_id = cursor.lastrowid
+    conn.commit()
+    conn.close()
+    return user_id
+
+def get_user_by_id(user_id):
+    conn = sqlite3.connect('user_data.db')
+    cursor = conn.cursor()
+    cursor.execute('SELECT * FROM users WHERE id = ?', (user_id,))
+    user = cursor.fetchone()
+    conn.close()
+    return user
+
+def log_session(user_id):
+    conn = sqlite3.connect('user_data.db')
+    cursor = conn.cursor()
+    cursor.execute('''
+        INSERT INTO sessions (user_id) 
+        VALUES (?)
+    ''', (user_id,))
+    session_id = cursor.lastrowid
+    conn.commit()
+    conn.close()
+    return session_id
+
+def log_question_generation(user_id, subject, num_questions, question_types):
+    conn = sqlite3.connect('user_data.db')
+    cursor = conn.cursor()
+    cursor.execute('''
+        INSERT INTO question_generations (user_id, subject, num_questions, question_types) 
+        VALUES (?, ?, ?, ?)
+    ''', (user_id, subject, num_questions, json.dumps(question_types)))
+    conn.commit()
+    conn.close()
+
+def get_database_stats():
+    conn = sqlite3.connect('user_data.db')
+    cursor = conn.cursor()
+    
+    # Get user count
+    cursor.execute('SELECT COUNT(*) FROM users')
+    user_count = cursor.fetchone()[0]
+    
+    # Get total generations
+    cursor.execute('SELECT COUNT(*) FROM question_generations')
+    generation_count = cursor.fetchone()[0]
+    
+    # Get recent users
+    cursor.execute('SELECT name, institution, created_at FROM users ORDER BY created_at DESC LIMIT 10')
+    recent_users = cursor.fetchall()
+    
+    # Get recent generations
+    cursor.execute('''
+        SELECT u.name, u.institution, qg.subject, qg.num_questions, qg.generated_at 
+        FROM question_generations qg 
+        JOIN users u ON qg.user_id = u.id 
+        ORDER BY qg.generated_at DESC LIMIT 10
+    ''')
+    recent_generations = cursor.fetchall()
+    
+    conn.close()
+    return user_count, generation_count, recent_users, recent_generations
+
+def admin_dashboard():
+    st.markdown("## 📊 Admin Dashboard")
+    st.write("Database analytics and user information")
+    
+    user_count, generation_count, recent_users, recent_generations = get_database_stats()
+    
+    col1, col2, col3, col4 = st.columns(4)
+    
+    with col1:
+        st.metric("Total Users", user_count, "👥")
+    
+    with col2:
+        st.metric("Total Generations", generation_count, "📝")
+    
+    with col3:
+        st.metric("Active Sessions", "Live", "🟢")
+    
+    with col4:
+        st.metric("Database Status", "Connected", "✅")
+    
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        st.markdown("### 👥 Recent Users")
+        if recent_users:
+            for user in recent_users:
+                st.write(f"**{user[0]}** - {user[1]} ({user[2][:10]}...)")
+        else:
+            st.write("No users yet")
+    
+    with col2:
+        st.markdown("### 📝 Recent Generations")
+        if recent_generations:
+            for gen in recent_generations:
+                st.write(f"**{gen[0]}** - {gen[2]} ({gen[3]} questions)")
+        else:
+            st.write("No generations yet")
+    
+    if st.button("🔙 Back to Dashboard"):
+        st.session_state.show_admin = False
+        st.rerun()
+
 def main():
     if 'authenticated' not in st.session_state:
         st.session_state.authenticated = False
@@ -209,47 +362,45 @@ def main():
             with col2:
                 st.markdown("""
                 <div style="background: rgba(255, 255, 255, 0.2); backdrop-filter: blur(20px); border-radius: 20px; padding: 2rem; border: 1px solid rgba(255, 255, 255, 0.4); box-shadow: 0 8px 32px rgba(0,0,0,0.2);">
-                    <h2 style="text-align: center; color: white; margin-bottom: 2rem;">🔐 Login</h2>
+                    <h2 style="text-align: center; color: white; margin-bottom: 2rem;">👋 Welcome to QuestVibe</h2>
                 </div>
                 """, unsafe_allow_html=True)
                 with st.form("login_form"):
-                    username = st.text_input("👤 Username", placeholder="Enter your username")
-                    password = st.text_input("🔒 Password", type="password", placeholder="Enter your password")
-                    st.info("💡 Password characters are hidden for security - this is normal!")
+                    name = st.text_input("👤 Your Name", placeholder="Enter your full name")
+                    institution = st.text_input("🏫 Institution", placeholder="University/College/School name")
+                    st.info("💡 Your information will be stored securely in our database.")
                     col1, col2, col3 = st.columns(3)
                     with col2:
-                        submit_button = st.form_submit_button("🚀 Login", type="primary", use_container_width=True)
+                        submit_button = st.form_submit_button("🚀 Start Using QuestVibe", type="primary", use_container_width=True)
                     if submit_button:
-                        if username in USERS and USERS[username]["password"] == password:
+                        if name.strip() and institution.strip():
+                            # Save user to database
+                            user_id = save_user_to_database(name.strip(), institution.strip())
+                            session_id = log_session(user_id)
+                            
                             st.session_state.authenticated = True
                             st.session_state.current_user = {
-                                "username": username,
-                                "role": USERS[username]["role"],
-                                "name": USERS[username]["name"]
+                                "id": user_id,
+                                "name": name.strip(),
+                                "institution": institution.strip(),
+                                "role": "user",
+                                "session_id": session_id
                             }
-                            st.success(f"✅ Welcome back, {USERS[username]['name']}!")
+                            st.success(f"✅ Welcome to QuestVibe, {name.strip()}!")
                             st.rerun()
                         else:
-                            st.error("❌ Invalid username or password!")
-                with st.expander("🔑 Demo Credentials"):
+                            st.error("❌ Please enter both your name and institution!")
+                with st.expander("ℹ️ About QuestVibe"):
                     st.markdown("""
-                    **Try these demo accounts:**
+                    **QuestVibe** is an AI-powered question paper generator that helps educators create comprehensive exams.
                     
-                    👨‍💼 **Admin Account:**
-                    - Username: `admin`
-                    - Password: `admin123`
+                    **Features:**
+                    - 🤖 **Auto Generation**: Generate questions from predefined topics
+                    - 📝 **Manual Creation**: Create questions from your own syllabus
+                    - 📊 **Pattern Analysis**: Analyze exam patterns and trends
+                    - 🗄️ **Database Tracking**: All your activities are securely stored
                     
-                    👨‍🏫 **Teacher Account:**
-                    - Username: `teacher`
-                    - Password: `teacher123`
-                    
-                    👨‍🎓 **Student Account:**
-                    - Username: `student`
-                    - Password: `student123`
-                    
-                    🎯 **Demo Account:**
-                    - Username: `demo`
-                    - Password: `demo123`
+                    **Your data is safe and will only be used to improve your experience.**
                     """)
                 st.markdown("---")
                 st.markdown("### ✨ Features Preview")
@@ -281,8 +432,8 @@ def main():
     
     with col1:
         if st.session_state.current_user:
-            user_role_emoji = {"admin": "👨‍💼", "teacher": "👨‍🏫", "student": "👨‍🎓"}.get(st.session_state.current_user["role"], "👤")
-            st.markdown(f"### {user_role_emoji} Welcome, {st.session_state.current_user['name']} ({st.session_state.current_user['role'].title()})")
+            st.markdown(f"### 👋 Welcome, {st.session_state.current_user['name']}")
+            st.markdown(f"🏫 **Institution:** {st.session_state.current_user['institution']}")
     
     with col4:
         if st.button("🚪 Logout", type="secondary"):
@@ -297,6 +448,8 @@ def main():
         st.session_state.show_manual_creation = False
     if 'show_pattern_analysis' not in st.session_state:
         st.session_state.show_pattern_analysis = False
+    if 'show_admin' not in st.session_state:
+        st.session_state.show_admin = False
     
     # Check which page to show
     if st.session_state.show_auto_generation:
@@ -307,6 +460,9 @@ def main():
         return
     elif st.session_state.show_pattern_analysis:
         pattern_analysis_page()
+        return
+    elif st.session_state.show_admin:
+        admin_dashboard()
         return
     
     # Main dashboard
@@ -378,6 +534,15 @@ def main():
         st.metric("Bloom's Levels", "6 Levels", "🧠")
 
     st.markdown("---")
+    
+    # Admin section
+    if st.session_state.current_user and st.session_state.current_user.get('role') == 'admin':
+        st.markdown("### 🔧 Admin Tools")
+        if st.button("📊 View Database Analytics", type="secondary"):
+            st.session_state.show_admin = True
+            st.rerun()
+    
+    st.markdown("---")
     st.markdown("""
     <div class="footer">
         <p>🤖 Powered by AI • 🚀 Fully Automated • 📊 Smart Analytics • 🧠 Bloom's Taxonomy</p>
@@ -419,6 +584,15 @@ def auto_generation_page():
     
     if st.button("🚀 Generate Questions", type="primary"):
         with st.spinner("🤖 Generating questions..."):
+            # Log the generation activity to database
+            if st.session_state.current_user:
+                log_question_generation(
+                    st.session_state.current_user['id'],
+                    subject,
+                    num_questions,
+                    question_types
+                )
+            
             # Simulate question generation
             topics = SYLLABUS_TOPICS[subject]
             questions = []
@@ -436,6 +610,8 @@ def auto_generation_page():
                     questions.append({"type": q_type, "question": question})
             
             st.success(f"✅ Generated {len(questions)} questions!")
+            if st.session_state.current_user:
+                st.info(f"📊 Activity logged for {st.session_state.current_user['name']} from {st.session_state.current_user['institution']}")
             
             # Display questions
             st.markdown("### 📋 Generated Questions")
