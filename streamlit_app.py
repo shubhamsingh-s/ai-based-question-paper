@@ -493,6 +493,54 @@ def super_admin_dashboard():
                 mime="application/zip"
             )
     
+    # AI Database Management
+    st.markdown("### 🤖 AI Database Management")
+    
+    # Get database status
+    db_status = st.session_state.questvibe_ai_db.get_database_status()
+    
+    col1, col2, col3, col4 = st.columns(4)
+    
+    with col1:
+        st.metric("Total Subjects", db_status['total_subjects'], "📚")
+    
+    with col2:
+        st.metric("Total Topics", db_status['total_topics'], "🎯")
+    
+    with col3:
+        st.metric("Duplicates Found", len(db_status['duplicates']), "⚠️")
+    
+    with col4:
+        if st.button("🧹 Clean Duplicates", type="secondary"):
+            st.session_state.questvibe_ai_db.cleanup_database()
+            st.success("✅ Database cleaned!")
+            st.rerun()
+    
+    # Show branch statistics
+    st.markdown("**📊 Subjects by Branch:**")
+    for branch, count in db_status['branch_counts']:
+        st.write(f"• **{branch}**: {count} subjects")
+    
+    # Show duplicates if any
+    if db_status['duplicates']:
+        st.markdown("**⚠️ Duplicate Subjects Found:**")
+        for branch, subject, count in db_status['duplicates']:
+            st.write(f"• {branch} - {subject} (appears {count} times)")
+    
+    # Repopulate database option
+    st.markdown("**🔄 Database Operations:**")
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        if st.button("🔄 Repopulate AI Database", type="primary"):
+            st.session_state.questvibe_ai_db.populate_database()
+            st.success("✅ AI Database repopulated!")
+            st.rerun()
+    
+    with col2:
+        if st.button("📊 Refresh Status", type="secondary"):
+            st.rerun()
+    
     conn.close()
     
     if st.button("🔙 Back to Dashboard"):
@@ -695,13 +743,14 @@ class QuestVibeAIDatabase:
         conn = sqlite3.connect('user_data.db')
         cursor = conn.cursor()
         
-        # Create subjects table if not exists
+        # Create subjects table if not exists with UNIQUE constraint
         cursor.execute('''
             CREATE TABLE IF NOT EXISTS subjects (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 branch TEXT NOT NULL,
                 subject_name TEXT NOT NULL,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                UNIQUE(branch, subject_name)
             )
         ''')
         
@@ -714,6 +763,7 @@ class QuestVibeAIDatabase:
                 difficulty_level TEXT DEFAULT 'Medium',
                 bloom_level TEXT DEFAULT 'Understanding',
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                UNIQUE(subject_id, topic_name),
                 FOREIGN KEY (subject_id) REFERENCES subjects (id)
             )
         ''')
@@ -736,29 +786,53 @@ class QuestVibeAIDatabase:
             )
         ''')
         
+        # Clear existing data to prevent duplicates
+        cursor.execute('DELETE FROM topics')
+        cursor.execute('DELETE FROM subjects')
+        
         # Populate subjects and topics
         for branch, data in self.engineering_subjects.items():
             for subject in data["subjects"]:
-                # Insert subject
-                cursor.execute('''
-                    INSERT OR IGNORE INTO subjects (branch, subject_name) 
-                    VALUES (?, ?)
-                ''', (branch, subject))
-                
-                subject_id = cursor.lastrowid
-                if subject_id == 0:  # If subject already exists, get its ID
+                try:
+                    # Insert subject with UNIQUE constraint
+                    cursor.execute('''
+                        INSERT INTO subjects (branch, subject_name) 
+                        VALUES (?, ?)
+                    ''', (branch, subject))
+                    
+                    subject_id = cursor.lastrowid
+                    
+                    # Insert topics if available
+                    if subject in data.get("exam_topics", {}):
+                        for topic in data["exam_topics"][subject]:
+                            try:
+                                cursor.execute('''
+                                    INSERT INTO topics (subject_id, topic_name) 
+                                    VALUES (?, ?)
+                                ''', (subject_id, topic))
+                            except sqlite3.IntegrityError:
+                                # Topic already exists, skip
+                                pass
+                except sqlite3.IntegrityError:
+                    # Subject already exists, get its ID and add topics
                     cursor.execute('SELECT id FROM subjects WHERE branch = ? AND subject_name = ?', (branch, subject))
-                    subject_id = cursor.fetchone()[0]
-                
-                # Insert topics if available
-                if subject in data.get("exam_topics", {}):
-                    for topic in data["exam_topics"][subject]:
-                        cursor.execute('''
-                            INSERT OR IGNORE INTO topics (subject_id, topic_name) 
-                            VALUES (?, ?)
-                        ''', (subject_id, topic))
+                    result = cursor.fetchone()
+                    if result:
+                        subject_id = result[0]
+                        # Insert topics if available
+                        if subject in data.get("exam_topics", {}):
+                            for topic in data["exam_topics"][subject]:
+                                try:
+                                    cursor.execute('''
+                                        INSERT INTO topics (subject_id, topic_name) 
+                                        VALUES (?, ?)
+                                    ''', (subject_id, topic))
+                                except sqlite3.IntegrityError:
+                                    # Topic already exists, skip
+                                    pass
         
-        # Insert default exam patterns
+        # Clear and insert default exam patterns
+        cursor.execute('DELETE FROM exam_patterns')
         default_patterns = [
             ("Mid Semester", 20, 10, 5, 3, 2, 90, 5.0),
             ("End Semester", 30, 15, 8, 5, 2, 180, 5.0),
@@ -767,7 +841,7 @@ class QuestVibeAIDatabase:
         
         for pattern_name, total, mcq, short, long, case_study, duration, marks in default_patterns:
             cursor.execute('''
-                INSERT OR IGNORE INTO exam_patterns 
+                INSERT INTO exam_patterns 
                 (pattern_name, total_questions, mcq_count, short_answer_count, long_answer_count, case_study_count, time_duration, marks_per_question) 
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?)
             ''', (pattern_name, total, mcq, short, long, case_study, duration, marks))
@@ -818,6 +892,82 @@ class QuestVibeAIDatabase:
         conn.close()
         return patterns
 
+    def cleanup_database(self):
+        """Clean up duplicate data and ensure database integrity"""
+        conn = sqlite3.connect('user_data.db')
+        cursor = conn.cursor()
+        
+        # Remove duplicate subjects (keep the first occurrence)
+        cursor.execute('''
+            DELETE FROM subjects 
+            WHERE id NOT IN (
+                SELECT MIN(id) 
+                FROM subjects 
+                GROUP BY branch, subject_name
+            )
+        ''')
+        
+        # Remove duplicate topics (keep the first occurrence)
+        cursor.execute('''
+            DELETE FROM topics 
+            WHERE id NOT IN (
+                SELECT MIN(id) 
+                FROM topics 
+                GROUP BY subject_id, topic_name
+            )
+        ''')
+        
+        # Remove orphaned topics (topics without subjects)
+        cursor.execute('''
+            DELETE FROM topics 
+            WHERE subject_id NOT IN (SELECT id FROM subjects)
+        ''')
+        
+        conn.commit()
+        conn.close()
+        
+        return True
+    
+    def get_database_status(self):
+        """Get database status and statistics"""
+        conn = sqlite3.connect('user_data.db')
+        cursor = conn.cursor()
+        
+        # Count subjects by branch
+        cursor.execute('''
+            SELECT branch, COUNT(*) as count 
+            FROM subjects 
+            GROUP BY branch 
+            ORDER BY branch
+        ''')
+        branch_counts = cursor.fetchall()
+        
+        # Count total topics
+        cursor.execute('SELECT COUNT(*) FROM topics')
+        total_topics = cursor.fetchone()[0]
+        
+        # Count total subjects
+        cursor.execute('SELECT COUNT(*) FROM subjects')
+        total_subjects = cursor.fetchone()[0]
+        
+        # Check for duplicates
+        cursor.execute('''
+            SELECT branch, subject_name, COUNT(*) as count 
+            FROM subjects 
+            GROUP BY branch, subject_name 
+            HAVING COUNT(*) > 1
+        ''')
+        duplicates = cursor.fetchall()
+        
+        conn.close()
+        
+        return {
+            'branch_counts': branch_counts,
+            'total_topics': total_topics,
+            'total_subjects': total_subjects,
+            'duplicates': duplicates
+        }
+
 # Initialize AI Database System
 if 'questvibe_ai_db' not in st.session_state:
     st.session_state.questvibe_ai_db = QuestVibeAIDatabase()
@@ -850,7 +1000,7 @@ def main():
                     institution = st.text_input("🏫 Institution", placeholder="University/College/School name")
                     col1, col2, col3 = st.columns(3)
                     with col2:
-                        submit_button = st.form_submit_button("🚀 Start Using QuestVibe", type="primary", use_container_width=True)
+                        submit_button = st.form_submit_button("Start Using QuestVibe", type="primary", use_container_width=True)
                     if submit_button:
                         if name.strip() and institution.strip():
                             # Check if this is a super user login attempt
