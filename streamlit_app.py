@@ -276,12 +276,234 @@ def main():
                     </div>
                     """, unsafe_allow_html=True)
         return
-    # If authenticated, show a simple dashboard
-    st.markdown(f"### 👋 Welcome, {st.session_state.current_user['name']} ({st.session_state.current_user['role'].title()})")
-    st.write("You are now logged in! (Main app features go here.)")
-    if st.button("🚪 Logout", type="secondary"):
-        st.session_state.authenticated = False
-        st.session_state.current_user = None
+    # If authenticated, show the full dashboard
+    col1, col2, col3, col4 = st.columns([3, 1, 1, 1])
+    
+    with col1:
+        if st.session_state.current_user:
+            user_role_emoji = {"admin": "👨‍💼", "teacher": "👨‍🏫", "student": "👨‍🎓"}.get(st.session_state.current_user["role"], "👤")
+            st.markdown(f"### {user_role_emoji} Welcome, {st.session_state.current_user['name']} ({st.session_state.current_user['role'].title()})")
+    
+    with col4:
+        if st.button("🚪 Logout", type="secondary"):
+            st.session_state.authenticated = False
+            st.session_state.current_user = None
+            st.rerun()
+    
+    # Initialize session state for navigation
+    if 'show_auto_generation' not in st.session_state:
+        st.session_state.show_auto_generation = False
+    if 'show_manual_creation' not in st.session_state:
+        st.session_state.show_manual_creation = False
+    if 'show_pattern_analysis' not in st.session_state:
+        st.session_state.show_pattern_analysis = False
+    
+    # Check which page to show
+    if st.session_state.show_auto_generation:
+        auto_generation_page()
+        return
+    elif st.session_state.show_manual_creation:
+        manual_creation_page()
+        return
+    elif st.session_state.show_pattern_analysis:
+        pattern_analysis_page()
+        return
+    
+    # Main dashboard
+    st.markdown("""
+    # Welcome to QuestVibe!
+
+    This intelligent system helps you create comprehensive question papers based on your syllabus topics.
+    """)
+
+    col1, col2, col3, col4 = st.columns(4)
+
+    with col1:
+        st.markdown("### 📚 Syllabus-Based")
+        st.write("Generate questions from your specific syllabus topics")
+
+    with col2:
+        st.markdown("### 🤖 Auto Generation")
+        st.write("Fully automated question paper creation with predefined topics")
+
+    with col3:
+        st.markdown("### 🎯 Multiple Types")
+        st.write("Support for MCQ, Short Answer, Long Answer, and Case Study questions")
+
+    with col4:
+        st.markdown("### 📊 Smart Analysis")
+        st.write("Get detailed analytics and visualizations with Bloom's taxonomy")
+
+    st.markdown("---")
+    st.markdown("### 🚀 Get Started")
+
+    col1, col2, col3 = st.columns(3)
+
+    with col1:
+        st.markdown("### 🤖 Auto Generation")
+        st.write("Generate questions automatically from predefined syllabus topics")
+        if st.button("Start Auto Generation", key="auto_btn", type="primary"):
+            st.session_state.show_auto_generation = True
+            st.rerun()
+
+    with col2:
+        st.markdown("### 📝 Manual Creation")
+        st.write("Create questions manually by uploading or pasting syllabus")
+        if st.button("Start Creating", key="create_btn"):
+            st.session_state.show_manual_creation = True
+            st.rerun()
+
+    with col3:
+        st.markdown("### 📊 Pattern Analysis")
+        st.write("Analyze past papers to understand exam patterns")
+        if st.button("Start Analysis", key="analyze_btn"):
+            st.session_state.show_pattern_analysis = True
+            st.rerun()
+
+    st.markdown("---")
+    st.markdown("### 📈 System Overview")
+
+    col1, col2, col3, col4 = st.columns(4)
+
+    with col1:
+        st.metric("Subjects Available", "5+", "📚")
+
+    with col2:
+        st.metric("Total Topics", "50+", "🎯")
+
+    with col3:
+        st.metric("Question Types", "4 Supported", "📝")
+
+    with col4:
+        st.metric("Bloom's Levels", "6 Levels", "🧠")
+
+    st.markdown("---")
+    st.markdown("""
+    <div class="footer">
+        <p>🤖 Powered by AI • 🚀 Fully Automated • 📊 Smart Analytics • 🧠 Bloom's Taxonomy</p>
+    </div>
+    """, unsafe_allow_html=True)
+
+def auto_generation_page():
+    st.markdown("## 🤖 Auto Question Generation")
+    st.write("Generate questions automatically from predefined syllabus topics")
+    
+    # Sample syllabus topics
+    SYLLABUS_TOPICS = {
+        "Database Management System": [
+            "Introduction to DBMS", "ER Model", "Relational Model", "SQL", "Normalization",
+            "Transaction Management", "Concurrency Control", "Database Security"
+        ],
+        "Big Data Fundamentals": [
+            "Introduction to Big Data", "Hadoop Ecosystem", "MapReduce", "HDFS",
+            "NoSQL Databases", "Data Processing", "Big Data Analytics"
+        ],
+        "Computer Networks": [
+            "Network Fundamentals", "OSI Model", "TCP/IP", "Network Protocols",
+            "Network Security", "Wireless Networks", "Network Management"
+        ]
+    }
+    
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        subject = st.selectbox("📚 Select Subject", list(SYLLABUS_TOPICS.keys()))
+        num_questions = st.slider("📝 Number of Questions", 5, 50, 20)
+    
+    with col2:
+        question_types = st.multiselect(
+            "🎯 Question Types",
+            ["MCQ", "Short Answer", "Long Answer", "Case Study"],
+            default=["MCQ", "Short Answer"]
+        )
+    
+    if st.button("🚀 Generate Questions", type="primary"):
+        with st.spinner("🤖 Generating questions..."):
+            # Simulate question generation
+            topics = SYLLABUS_TOPICS[subject]
+            questions = []
+            
+            for i in range(num_questions):
+                topic = random.choice(topics)
+                q_type = random.choice(question_types)
+                
+                if q_type == "MCQ":
+                    question = f"{i+1}. What is {topic}? (MCQ)"
+                    options = [f"Option A", f"Option B", f"Option C", f"Option D"]
+                    questions.append({"type": q_type, "question": question, "options": options})
+                else:
+                    question = f"{i+1}. Explain {topic} in detail. ({q_type})"
+                    questions.append({"type": q_type, "question": question})
+            
+            st.success(f"✅ Generated {len(questions)} questions!")
+            
+            # Display questions
+            st.markdown("### 📋 Generated Questions")
+            for q in questions:
+                if q["type"] == "MCQ":
+                    st.write(f"**{q['question']}**")
+                    for opt in q["options"]:
+                        st.write(f"   {opt}")
+                else:
+                    st.write(f"**{q['question']}**")
+                st.write("---")
+    
+    if st.button("🔙 Back to Dashboard"):
+        st.session_state.show_auto_generation = False
+        st.rerun()
+
+def manual_creation_page():
+    st.markdown("## 📝 Manual Question Creation")
+    st.write("Create questions manually by uploading or pasting syllabus")
+    
+    tab1, tab2 = st.tabs(["📄 Upload Syllabus", "✏️ Paste Syllabus"])
+    
+    with tab1:
+        uploaded_file = st.file_uploader("Choose a file", type=['txt', 'pdf', 'docx'])
+        if uploaded_file is not None:
+            st.success(f"✅ File uploaded: {uploaded_file.name}")
+            st.write("File content will be processed here...")
+    
+    with tab2:
+        syllabus_text = st.text_area("Paste your syllabus here:", height=200)
+        if syllabus_text:
+            st.write("Syllabus content will be processed here...")
+    
+    if st.button("🔙 Back to Dashboard"):
+        st.session_state.show_manual_creation = False
+        st.rerun()
+
+def pattern_analysis_page():
+    st.markdown("## 📊 Pattern Analysis")
+    st.write("Analyze past papers to understand exam patterns")
+    
+    # Sample analytics data
+    col1, col2, col3, col4 = st.columns(4)
+    
+    with col1:
+        st.metric("Total Papers", "25", "📄")
+    
+    with col2:
+        st.metric("Avg Questions", "18", "❓")
+    
+    with col3:
+        st.metric("MCQ %", "40%", "📊")
+    
+    with col4:
+        st.metric("Difficulty", "Medium", "📈")
+    
+    # Sample chart
+    st.markdown("### 📈 Question Type Distribution")
+    data = pd.DataFrame({
+        'Question Type': ['MCQ', 'Short Answer', 'Long Answer', 'Case Study'],
+        'Count': [40, 30, 20, 10]
+    })
+    
+    fig = px.pie(data, values='Count', names='Question Type', title='Question Type Distribution')
+    st.plotly_chart(fig)
+    
+    if st.button("🔙 Back to Dashboard"):
+        st.session_state.show_pattern_analysis = False
         st.rerun()
 
 if __name__ == "__main__":
