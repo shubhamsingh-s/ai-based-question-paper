@@ -13,7 +13,7 @@ class CollaborationSystem:
         self.active_users = {}
         self.shared_questions = {}
         self.comments = {}
-        self.collaboration_history = []
+        self.collaboration_history = {}
     
     def add_user_to_session(self, user_id: str, user_name: str, session_id: str):
         """Add user to collaboration session"""
