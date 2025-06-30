@@ -22,6 +22,7 @@ from streamlit_option_menu import option_menu
 # )
 from transformers import pipeline
 import torch
+import streamlit_authenticator as stauth
 
 # Page configuration
 st.set_page_config(
@@ -1566,25 +1567,49 @@ def main_dashboard():
     elif st.session_state.active_dashboard == "Super Admin":
         super_admin_dashboard()
 
+# --- Persistent Login Integration (streamlit_app.py) ---
+import streamlit_authenticator as stauth
+
+# Example static user list (replace with DB integration later)
+users = {
+    "usernames": {
+        "admin": {
+            "name": "Admin User",
+            "password": stauth.Hasher(['adminpassword']).generate()[0],
+            "role": "admin"
+        },
+        "user": {
+            "name": "Normal User",
+            "password": stauth.Hasher(['userpassword']).generate()[0],
+            "role": "user"
+        }
+    }
+}
+
+authenticator = stauth.Authenticate(
+    users["usernames"],
+    "questvibe_cookie", "questvibe_signature_key", cookie_expiry_days=30
+)
+
 def login_page():
-    """Displays the login page."""
-    st.markdown("## 👋 Welcome to QuestVibe")
-    
-    col1, col2, col3 = st.columns([1, 2, 1])
-    with col2:
-        with st.container():
-            st.markdown("### 📝 Enter Your Details to Begin")
-            name = st.text_input("👤 Your Name", placeholder="Enter your full name")
-            institution = st.text_input("🏫 Institution", placeholder="Your school or organization")
-            
-            if st.button("🚀 Start Using QuestVibe", type="primary", use_container_width=True):
-                if name and institution:
-                    user_id = save_user_to_database(name, institution)
-                    st.session_state.current_user = {'id': user_id, 'name': name, 'institution': institution, 'role': 'user'}
-                    log_session(user_id)
-                    st.rerun()
-                else:
-                    st.error("❌ Please enter both your name and institution.")
+    """Displays the login page using streamlit-authenticator (streamlit_app.py)"""
+    name, authentication_status, username = authenticator.login("Login", "main")
+    if authentication_status:
+        st.session_state.current_user = {
+            'id': username,
+            'name': name,
+            'institution': 'N/A',
+            'role': users['usernames'][username]['role']
+        }
+        st.success(f"Welcome {name}!")
+        if st.button("Logout"):
+            authenticator.logout("main")
+            st.session_state.current_user = None
+            st.rerun()
+    elif authentication_status is False:
+        st.error("Username/password is incorrect")
+    elif authentication_status is None:
+        st.warning("Please enter your username and password")
 
 def main():
     """Main application function"""

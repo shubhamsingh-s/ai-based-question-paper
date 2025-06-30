@@ -59,4 +59,12 @@ gunicorn
 
 # Added from the code block
 sentence-transformers
-PyPDF2 
+PyPDF2
+
+# New from the code block
+yake
+# or for even more advanced: keybert
+keybert
+
+# Added from the code block
+streamlit-authenticator 
