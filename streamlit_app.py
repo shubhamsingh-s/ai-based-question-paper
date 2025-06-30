@@ -1,4 +1,4 @@
-# Main application file for QuestVibe
+# Main application file for QuestVibe - Version 2.0
 "import streamlit as st" 
 
 import streamlit as st
