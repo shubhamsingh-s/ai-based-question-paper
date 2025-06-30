@@ -20,6 +20,8 @@ from streamlit_option_menu import option_menu
 #     create_connection,
 #     create_tables,
 # )
+from transformers import pipeline
+import torch
 
 # Page configuration
 st.set_page_config(
@@ -1261,6 +1263,35 @@ class QuestVibeChatGPT:
 if 'questvibe_chatgpt' not in st.session_state:
     st.session_state.questvibe_chatgpt = QuestVibeChatGPT()
 
+# --- KeyBERT-powered topic extraction ---
+from keybert import KeyBERT
+import spacy
+
+# Load models globally for efficiency
+if 'kw_model' not in st.session_state:
+    st.session_state.kw_model = KeyBERT(model='all-MiniLM-L6-v2')
+if 'spacy_nlp' not in st.session_state:
+    st.session_state.spacy_nlp = spacy.load("en_core_web_sm")
+
+def keybert_syllabus_parser(syllabus_text, max_keywords=20):
+    kw_model = st.session_state.kw_model
+    nlp = st.session_state.spacy_nlp
+    # 1. KeyBERT: semantic keyword/keyphrase extraction
+    keybert_keywords = kw_model.extract_keywords(
+        syllabus_text,
+        keyphrase_ngram_range=(1, 4),
+        stop_words='english',
+        top_n=max_keywords
+    )
+    keybert_phrases = set([kw for kw, score in keybert_keywords])
+    # 2. Noun phrase extraction (spaCy)
+    doc = nlp(syllabus_text)
+    noun_phrases = set(chunk.text.strip() for chunk in doc.noun_chunks if len(chunk.text.split()) < 8)
+    # 3. Combine and deduplicate
+    all_topics = keybert_phrases | noun_phrases
+    all_topics = [t for t in all_topics if len(t) > 2 and not t.isdigit()]
+    return list(all_topics)
+
 def main_dashboard():
     """The main dashboard shown after the user logs in."""
     st.sidebar.title("Menu")
@@ -1346,8 +1377,9 @@ def main_dashboard():
         syllabus_content = syllabus_text or syllabus_text_input
         st.session_state.predict_syllabus_content = syllabus_content
         if syllabus_content:
-            st.markdown("**Preview: Syllabus Content**")
-            st.write(syllabus_content[:1000] + ("..." if len(syllabus_content) > 1000 else ""))
+            topics = keybert_syllabus_parser(syllabus_content)
+            st.markdown(f"**Extracted Topics ({len(topics)}):**")
+            st.write(", ".join(topics))
         else:
             st.info("Upload a file or paste text to see the content here.")
 
@@ -1390,13 +1422,29 @@ def main_dashboard():
                 return "Create"
             return "Other"
 
+        # Engine selector for Predictive Analysis
+        engine = st.radio(
+            "Question Generation Engine",
+            ["Extract from Previous Paper", "GPT-4 (OpenAI API)", "Local LLM (offline)"],
+            index=0 if prev_content else (1 if st.secrets.get("OPENAI_API_KEY") else 2)
+        )
+
         if prev_content and syllabus_content:
             if st.button("🔬 Analyze", type="primary"):
                 with st.spinner("Running ML pipeline..."):
-                    # 1. Extract questions
-                    questions = extract_questions(prev_content)
+                    # 1. Get questions
+                    if engine == "Extract from Previous Paper":
+                        questions = extract_questions(prev_content)
+                    else:
+                        topics = keybert_syllabus_parser(syllabus_content)
+                        prompt = f"Generate 20 questions for the syllabus topics: {', '.join(topics)}. Format as a list."
+                        if engine == "GPT-4 (OpenAI API)" and st.secrets.get("OPENAI_API_KEY"):
+                            questions_text = generate_questions_gpt4(prompt, st.secrets["OPENAI_API_KEY"])
+                        else:
+                            questions_text = generate_questions_local(prompt)
+                        questions = [q.strip() for q in questions_text.split('\n') if len(q.strip()) > 10]
                     # 2. Extract topics
-                    topics = extract_topics_from_content(syllabus_content)
+                    topics = keybert_syllabus_parser(syllabus_content)
                     # 3. Embed questions and topics
                     model = SentenceTransformer('all-MiniLM-L6-v2')
                     q_embeds = model.encode(questions)
@@ -1466,7 +1514,7 @@ def main_dashboard():
         syllabus_text_input = st.text_area("Or paste syllabus text here", height=200, key="syllabus_text")
         content = syllabus_text or syllabus_text_input
         if content:
-            topics = extract_topics_from_content(content)
+            topics = keybert_syllabus_parser(content)
             st.markdown(f"**Extracted Topics ({len(topics)}):**")
             st.write(", ".join(topics))
         else:
@@ -1485,50 +1533,32 @@ def main_dashboard():
                 ["MCQ", "Short Answer", "Long Answer", "Case Study"],
                 default=["MCQ", "Short Answer"]
             )
+            # Engine selector
+            engine = st.radio(
+                "Question Generation Engine",
+                ["GPT-4 (OpenAI API)", "Local LLM (offline)"],
+                index=0 if st.secrets.get("OPENAI_API_KEY") else 1
+            )
         if st.button("🤖 Generate Questions", type="primary", use_container_width=True):
             if syllabus_text and subject_name and question_types:
-                topics = extract_topics_from_content(syllabus_text)
-                with st.spinner("🤖 AI is generating intelligent questions..."):
-                    questions = st.session_state.questvibe_chatgpt.generate_questions(
-                        subject_name, topics, num_questions, question_types
-                    )
-                if questions:
-                    st.session_state.last_generated_questions = questions
-                    st.success(f"✅ Generated {len(questions)} intelligent questions!")
+                topics = keybert_syllabus_parser(syllabus_text)
+                prompt = f"Generate {num_questions} {', '.join(question_types)} questions for the subject '{subject_name}' covering these topics: {', '.join(topics)}. Format as a list."
+                if engine == "GPT-4 (OpenAI API)" and st.secrets.get("OPENAI_API_KEY"):
+                    with st.spinner("Generating questions using GPT-4 API..."):
+                        questions_text = generate_questions_gpt4(prompt, st.secrets["OPENAI_API_KEY"])
                 else:
-                    st.error("❌ AI failed to generate questions. Please try again or check your API key if you are a super admin.")
+                    with st.spinner("Generating questions using Local LLM (Mistral-7B-Instruct)..."):
+                        questions_text = generate_questions_local(prompt)
+                st.session_state.last_generated_questions = [q.strip() for q in questions_text.split('\n') if len(q.strip()) > 10]
+                st.success(f"✅ Generated {len(st.session_state.last_generated_questions)} questions!")
             else:
                 st.error("❌ Please provide syllabus content, a subject name, and select question types.")
         if 'last_generated_questions' in st.session_state:
             st.markdown("---")
             st.markdown("### 📋 Generated Questions")
             questions = st.session_state.last_generated_questions
-            analysis = st.session_state.questvibe_chatgpt.analyze_question_quality(questions)
-            col1, col2, col3, col4 = st.columns(4)
-            with col1:
-                st.metric("Quality Score", f"{analysis['quality_score']}/100", "⭐")
-            with col2:
-                st.metric("Topics Covered", len(analysis['topic_coverage']), "🎯")
-            with col3:
-                st.metric("Question Types", len(analysis['type_distribution']), "📝")
-            with col4:
-                st.metric("Difficulty Levels", len(analysis['difficulty_distribution']), "📊")
-            log_question_generation(
-                st.session_state.current_user['id'],
-                subject_name if 'subject_name' in locals() else "N/A",
-                num_questions if 'num_questions' in locals() else 0,
-                question_types if 'question_types' in locals() else []
-            )
             for i, q in enumerate(questions, 1):
-                with st.expander(f"Question {i}: {q.get('type', 'Question')} - {q.get('difficulty', 'Medium')} Difficulty", expanded=True):
-                    st.markdown(f"**{q['question']}**")
-                    if q.get('type') == 'MCQ' and q.get('options'):
-                        st.write("**Options:**")
-                        for option in q['options']:
-                            st.write(f"   {option}")
-                        if q.get('correct_answer'):
-                            st.success(f"**Correct Answer:** {q.get('correct_answer')}")
-                    st.write(f"**Topic:** {q.get('topic', 'General')}")
+                st.markdown(f"**Q{i}:** {q}")
     elif st.session_state.active_dashboard == "Collaboration":
         collaboration_dashboard()
     elif st.session_state.active_dashboard == "Admin":
@@ -1614,6 +1644,22 @@ def extract_topics_from_content(content: str) -> List[str]:
                 topics.append(topic)
     
     return topics[:20]  # Limit to 20 topics
+
+def generate_questions_gpt4(prompt, api_key):
+    import openai
+    openai.api_key = api_key
+    response = openai.ChatCompletion.create(
+        model="gpt-4",
+        messages=[{"role": "user", "content": prompt}],
+        max_tokens=1024,
+        temperature=0.7
+    )
+    return response.choices[0].message.content
+
+def generate_questions_local(prompt):
+    generator = pipeline("text-generation", model="mistralai/Mistral-7B-Instruct-v0.2", torch_dtype=torch.float16 if torch.cuda.is_available() else torch.float32, device=0 if torch.cuda.is_available() else -1)
+    result = generator(prompt, max_length=512, do_sample=True, temperature=0.7)
+    return result[0]['generated_text']
 
 if __name__ == "__main__":
     main() 
