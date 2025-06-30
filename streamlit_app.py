@@ -1265,58 +1265,88 @@ def main_dashboard():
     """The main dashboard shown after the user logs in."""
     st.sidebar.title("Menu")
     with st.sidebar:
-        # Use a more consistent way to manage dashboard state
         if 'active_dashboard' not in st.session_state:
-            st.session_state.active_dashboard = "Question Generation"
-
+            st.session_state.active_dashboard = "Upload Previous Paper"
         selected = option_menu(
             menu_title=None,
-            options=["Question Generation", "Collaboration", "Admin", "Super Admin"],
-            icons=["robot", "people-fill", "shield-lock-fill", "key-fill"],
+            options=["Upload Previous Paper", "Upload Syllabus", "Auto Question Paper", "Collaboration", "Admin", "Super Admin"],
+            icons=["file-earmark-arrow-up", "file-earmark-text", "robot", "people-fill", "shield-lock-fill", "key-fill"],
             menu_icon="cast",
             default_index=0
         )
         st.session_state.active_dashboard = selected
-
         if st.button("Logout"):
             st.session_state.current_user = None
             st.rerun()
-
     st.markdown(f"### Welcome, {st.session_state.current_user['name']}!")
 
-    if st.session_state.active_dashboard == "Collaboration":
-        collaboration_dashboard()
-    elif st.session_state.active_dashboard == "Admin":
-        admin_dashboard()
-    elif st.session_state.active_dashboard == "Super Admin":
-        super_admin_dashboard()
-    else:
-        # Default view: Question Generation
-        st.markdown("#### 🚀 Generate Questions from Syllabus")
-        
+    if st.session_state.active_dashboard == "Upload Previous Paper":
+        st.markdown("#### 📄 Upload Previous Question Paper")
+        uploaded_file = st.file_uploader("Upload a previous paper (.pdf, .docx, .txt)", type=["pdf", "docx", "txt"], key="prev_paper_upload")
+        prev_paper_text = ""
+        if uploaded_file is not None:
+            if uploaded_file.type == "application/pdf":
+                import PyPDF2
+                reader = PyPDF2.PdfReader(uploaded_file)
+                prev_paper_text = "\n".join([page.extract_text() for page in reader.pages if page.extract_text()])
+            elif uploaded_file.type == "application/vnd.openxmlformats-officedocument.wordprocessingml.document":
+                import docx
+                doc = docx.Document(uploaded_file)
+                prev_paper_text = "\n".join([para.text for para in doc.paragraphs])
+            elif uploaded_file.type == "text/plain":
+                prev_paper_text = uploaded_file.read().decode("utf-8")
+        prev_paper_text_input = st.text_area("Or paste previous paper text here", height=200, key="prev_paper_text")
+        content = prev_paper_text or prev_paper_text_input
+        if content:
+            st.markdown("**Extracted Content:**")
+            st.write(content)
+        else:
+            st.info("Upload a file or paste text to see the content here.")
+
+    elif st.session_state.active_dashboard == "Upload Syllabus":
+        st.markdown("#### 📚 Upload Syllabus")
+        uploaded_file = st.file_uploader("Upload a syllabus file (.pdf, .docx, .txt)", type=["pdf", "docx", "txt"], key="syllabus_upload")
+        syllabus_text = ""
+        if uploaded_file is not None:
+            if uploaded_file.type == "application/pdf":
+                import PyPDF2
+                reader = PyPDF2.PdfReader(uploaded_file)
+                syllabus_text = "\n".join([page.extract_text() for page in reader.pages if page.extract_text()])
+            elif uploaded_file.type == "application/vnd.openxmlformats-officedocument.wordprocessingml.document":
+                import docx
+                doc = docx.Document(uploaded_file)
+                syllabus_text = "\n".join([para.text for para in doc.paragraphs])
+            elif uploaded_file.type == "text/plain":
+                syllabus_text = uploaded_file.read().decode("utf-8")
+        syllabus_text_input = st.text_area("Or paste syllabus text here", height=200, key="syllabus_text")
+        content = syllabus_text or syllabus_text_input
+        if content:
+            topics = extract_topics_from_content(content)
+            st.markdown(f"**Extracted Topics ({len(topics)}):**")
+            st.write(", ".join(topics))
+        else:
+            st.info("Upload a file or paste text to extract topics.")
+
+    elif st.session_state.active_dashboard == "Auto Question Paper":
+        st.markdown("#### 🚀 Auto Question Paper Generation")
         syllabus_text = st.text_area("Paste your syllabus, notes, or any text content here.", height=200, key="syllabus_input")
-        
         col1, col2 = st.columns(2)
         with col1:
             subject_name = st.text_input("📚 Subject Name", placeholder="e.g., Database Management Systems")
             num_questions = st.slider("📝 Number of Questions", 5, 50, 20)
-        
         with col2:
             question_types = st.multiselect(
                 "🎯 Question Types",
                 ["MCQ", "Short Answer", "Long Answer", "Case Study"],
                 default=["MCQ", "Short Answer"]
             )
-        
         if st.button("🤖 Generate Questions", type="primary", use_container_width=True):
             if syllabus_text and subject_name and question_types:
                 topics = extract_topics_from_content(syllabus_text)
-                
                 with st.spinner("🤖 AI is generating intelligent questions..."):
                     questions = st.session_state.questvibe_chatgpt.generate_questions(
                         subject_name, topics, num_questions, question_types
                     )
-                
                 if questions:
                     st.session_state.last_generated_questions = questions
                     st.success(f"✅ Generated {len(questions)} intelligent questions!")
@@ -1324,14 +1354,11 @@ def main_dashboard():
                     st.error("❌ AI failed to generate questions. Please try again or check your API key if you are a super admin.")
             else:
                 st.error("❌ Please provide syllabus content, a subject name, and select question types.")
-
         if 'last_generated_questions' in st.session_state:
             st.markdown("---")
             st.markdown("### 📋 Generated Questions")
             questions = st.session_state.last_generated_questions
             analysis = st.session_state.questvibe_chatgpt.analyze_question_quality(questions)
-            
-            # Show quality analysis
             col1, col2, col3, col4 = st.columns(4)
             with col1:
                 st.metric("Quality Score", f"{analysis['quality_score']}/100", "⭐")
@@ -1341,15 +1368,12 @@ def main_dashboard():
                 st.metric("Question Types", len(analysis['type_distribution']), "📝")
             with col4:
                 st.metric("Difficulty Levels", len(analysis['difficulty_distribution']), "📊")
-
-            # Log activity
             log_question_generation(
                 st.session_state.current_user['id'],
                 subject_name if 'subject_name' in locals() else "N/A",
                 num_questions if 'num_questions' in locals() else 0,
                 question_types if 'question_types' in locals() else []
             )
-            
             for i, q in enumerate(questions, 1):
                 with st.expander(f"Question {i}: {q.get('type', 'Question')} - {q.get('difficulty', 'Medium')} Difficulty", expanded=True):
                     st.markdown(f"**{q['question']}**")
@@ -1360,6 +1384,12 @@ def main_dashboard():
                         if q.get('correct_answer'):
                             st.success(f"**Correct Answer:** {q.get('correct_answer')}")
                     st.write(f"**Topic:** {q.get('topic', 'General')}")
+    elif st.session_state.active_dashboard == "Collaboration":
+        collaboration_dashboard()
+    elif st.session_state.active_dashboard == "Admin":
+        admin_dashboard()
+    elif st.session_state.active_dashboard == "Super Admin":
+        super_admin_dashboard()
 
 def login_page():
     """Displays the login page."""
