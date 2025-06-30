@@ -1,3 +1,4 @@
+# Main application file for QuestVibe
 "import streamlit as st" 
 
 import streamlit as st
@@ -12,9 +13,13 @@ import os
 import requests
 import openai
 from typing import List, Dict, Any
-from advanced_analytics import advanced_analytics_dashboard
-from export_system import enhanced_export_dashboard
+# from advanced_analytics import advanced_analytics_dashboard
 from collaboration_system import collaboration_dashboard
+from streamlit_option_menu import option_menu
+# from database_manager import (
+#     create_connection,
+#     create_tables,
+# )
 
 # Page configuration
 st.set_page_config(
@@ -259,12 +264,16 @@ def save_user_to_database(name, institution):
     return user_id
 
 def get_user_by_id(user_id):
+    """Get user by ID"""
     conn = sqlite3.connect('user_data.db')
+    conn.row_factory = sqlite3.Row
     cursor = conn.cursor()
-    cursor.execute('SELECT * FROM users WHERE id = ?', (user_id,))
+    cursor.execute("SELECT * FROM users WHERE id = ?", (user_id,))
     user = cursor.fetchone()
     conn.close()
-    return user
+    if user:
+        return dict(user)
+    return None
 
 def log_session(user_id):
     conn = sqlite3.connect('user_data.db')
@@ -1046,27 +1055,13 @@ class QuestVibeChatGPT:
         self.max_tokens = 1000
         
     def generate_questions(self, subject: str, topics: List[str], num_questions: int, question_types: List[str]) -> List[Dict]:
-        """Generate intelligent questions using ChatGPT"""
-        if not self.api_key:
-            return self.generate_fallback_questions(subject, topics, num_questions, question_types)
+        """Generate questions using ChatGPT with fallback"""
+        prompt = self.create_question_prompt(subject, topics, num_questions, question_types)
+        response = self.call_chatgpt_api(prompt)
         
-        try:
-            # Create prompt for ChatGPT
-            prompt = self.create_question_prompt(subject, topics, num_questions, question_types)
-            
-            # Call ChatGPT API
-            response = self.call_chatgpt_api(prompt)
-            
-            # Parse response
-            questions = self.parse_chatgpt_response(response, question_types)
-            
-            return questions[:num_questions]  # Ensure we get the requested number
-            
-        except Exception as e:
-            # Only show detailed error to super admins
-            if hasattr(st.session_state, 'current_user') and st.session_state.current_user and st.session_state.current_user.get('role') == 'super_admin':
-                st.warning(f"ChatGPT API error: {str(e)}. Using fallback generation.")
-            # For normal users, just use fallback silently
+        if response:
+            return self.parse_chatgpt_response(response, question_types)
+        else:
             return self.generate_fallback_questions(subject, topics, num_questions, question_types)
     
     def create_question_prompt(self, subject: str, topics: List[str], num_questions: int, question_types: List[str]) -> str:
@@ -1111,36 +1106,34 @@ class QuestVibeChatGPT:
         return prompt
     
     def call_chatgpt_api(self, prompt: str) -> str:
-        """Call ChatGPT API"""
+        """Call ChatGPT API using requests"""
         headers = {
             "Authorization": f"Bearer {self.api_key}",
             "Content-Type": "application/json"
         }
-        
         data = {
-            "model": self.model,
-            "messages": [
-                {"role": "system", "content": "You are an expert educational content creator specializing in engineering education."},
-                {"role": "user", "content": prompt}
-            ],
-            "max_tokens": self.max_tokens,
+            "model": "gpt-3.5-turbo",
+            "messages": [{"role": "user", "content": prompt}],
             "temperature": 0.7
         }
         
-        response = requests.post(
-            "https://api.openai.com/v1/chat/completions",
-            headers=headers,
-            json=data,
-            timeout=30
-        )
-        
-        if response.status_code == 200:
-            return response.json()["choices"][0]["message"]["content"]
-        else:
-            raise Exception(f"API call failed: {response.status_code}")
+        try:
+            response = requests.post(
+                "https://api.openai.com/v1/chat/completions",
+                headers=headers,
+                json=data
+            )
+            
+            if response.status_code == 200:
+                return response.json()["choices"][0]["message"]["content"]
+            else:
+                raise Exception(f"API call failed: {response.status_code}")
+        except Exception as e:
+            st.error(f"An error occurred while calling ChatGPT API: {e}")
+            return ""
     
     def parse_chatgpt_response(self, response: str, question_types: List[str]) -> List[Dict]:
-        """Parse ChatGPT response into structured questions"""
+        """Parse the response from ChatGPT API"""
         try:
             # Try to extract JSON from response
             json_start = response.find('{')
@@ -1389,13 +1382,15 @@ def main():
                             st.success("🔐 Super Admin access granted!")
         st.markdown("### 🚀 Generate Questions from Syllabus")
         
+        syllabus_text = st.text_area("Paste Syllabus Here", height=200)
+        content = syllabus_text
+        topics = extract_topics_from_content(content)
+
         # Get the content and topics
         if content:
             syllabus_content = content
-            syllabus_topics = topics
         else:
             syllabus_content = syllabus_text
-            syllabus_topics = topics
         
         col1, col2 = st.columns(2)
         
@@ -1411,13 +1406,13 @@ def main():
             )
             
             # Show extracted topics
-            if syllabus_topics:
-                st.write(f"**📖 Available Topics:** {len(syllabus_topics)}")
-                topic_preview = ", ".join(syllabus_topics[:5])
+            if topics:
+                st.write(f"**📖 Available Topics:** {len(topics)}")
+                topic_preview = ", ".join(topics[:5])
                 st.write(f"*{topic_preview}...*")
         
         if st.button("🤖 Generate Questions from Syllabus", type="primary"):
-            if syllabus_topics and subject_name:
+            if topics and subject_name:
                 # Check if user is super admin
                 is_super_admin = (hasattr(st.session_state, 'current_user') and 
                                 st.session_state.current_user and 
@@ -1427,13 +1422,13 @@ def main():
                     with st.spinner("🤖 AI is generating intelligent questions from syllabus using ChatGPT..."):
                         # Generate questions using ChatGPT
                         questions = st.session_state.questvibe_chatgpt.generate_questions(
-                            subject_name, syllabus_topics, num_questions, question_types
+                            subject_name, topics, num_questions, question_types
                         )
                 else:
                     with st.spinner("🤖 AI is generating intelligent questions from syllabus..."):
                         # Generate questions using ChatGPT (with silent fallback)
                         questions = st.session_state.questvibe_chatgpt.generate_questions(
-                            subject_name, syllabus_topics, num_questions, question_types
+                            subject_name, topics, num_questions, question_types
                         )
                 
                 # Analyze question quality
@@ -1445,7 +1440,7 @@ def main():
                 else:
                     st.success(f"✅ Generated {len(questions)} intelligent questions from syllabus!")
                 
-                st.info(f"🤖 AI used {len(syllabus_topics)} topics from your syllabus")
+                st.info(f"🤖 AI used {len(topics)} topics from your syllabus")
                 
                 # Show quality analysis
                 col1, col2, col3, col4 = st.columns(4)
@@ -1532,9 +1527,11 @@ def main():
             st.rerun()
 
     if st.session_state.get("show_advanced_analytics"):
-        advanced_analytics_dashboard()
+        # advanced_analytics_dashboard()
+        pass
     elif st.session_state.get("show_export_dashboard"):
-        enhanced_export_dashboard()
+        # enhanced_export_dashboard()
+        pass
     elif st.session_state.get("show_collaboration"):
         collaboration_dashboard()
     elif st.session_state.show_manual_creation:

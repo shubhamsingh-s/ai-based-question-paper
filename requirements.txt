@@ -1,57 +1,58 @@
 # QuestVibe AI Question Paper Generation System
-# Production-ready requirements with pinned versions
+# Version pins removed to allow for compatibility with newer Python environments.
 
 # Core web framework
-streamlit==1.28.1
+streamlit
+streamlit_option_menu
 
 # Data manipulation and analysis
-pandas==2.1.3
-numpy==1.24.3
+pandas
+numpy
 
 # Visualization and charts
-plotly==5.17.0
-matplotlib==3.8.2
+plotly
+matplotlib
 
 # Document processing
-PyMuPDF==1.23.8
-pdfplumber==0.10.3
-python-docx==1.1.0
+PyMuPDF
+pdfplumber
+python-docx
 
 # OCR capabilities
-pytesseract==0.3.10
+pytesseract
 
 # Text processing
-nltk==3.8.1
-spacy==3.7.2
+nltk
+spacy
 
 # Machine learning (for advanced features)
-scikit-learn==1.3.2
+scikit-learn
 
 # File handling
-openpyxl==3.1.2
-xlrd==2.0.1
+openpyxl
+xlrd
 
 # Utilities
-python-dateutil==2.8.2
-requests==2.31.0
-beautifulsoup4==4.12.2
+python-dateutil
+requests
+beautifulsoup4
 
 # AI and OpenAI integration
-openai==1.3.7
+openai
 
 # Image processing
-pillow==10.1.0
+pillow
 
 # Development and testing (optional for production)
-pytest==7.4.3
-pytest-cov==4.1.0
-black==23.11.0
-flake8==6.1.0
-isort==5.12.0
+pytest
+pytest-cov
+black
+flake8
+isort
 
 # Security and validation
-python-dotenv==1.0.0
-cryptography==41.0.8
+python-dotenv
+cryptography
 
 # Performance optimization
-gunicorn==21.2.0 
+gunicorn 
