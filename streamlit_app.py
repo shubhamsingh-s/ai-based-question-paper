@@ -1264,13 +1264,33 @@ if 'questvibe_chatgpt' not in st.session_state:
 def main_dashboard():
     """The main dashboard shown after the user logs in."""
     st.sidebar.title("Menu")
+    user_role = st.session_state.current_user.get('role', 'user')
+    # Build sidebar options based on user role
+    sidebar_options = [
+        "Upload Previous Paper",
+        "Upload Syllabus",
+        "Auto Question Paper",
+        "Collaboration"
+    ]
+    sidebar_icons = [
+        "file-earmark-arrow-up",
+        "file-earmark-text",
+        "robot",
+        "people-fill"
+    ]
+    if user_role in ["admin", "super_admin"]:
+        sidebar_options.append("Admin")
+        sidebar_icons.append("shield-lock-fill")
+    if user_role == "super_admin":
+        sidebar_options.append("Super Admin")
+        sidebar_icons.append("key-fill")
     with st.sidebar:
         if 'active_dashboard' not in st.session_state:
-            st.session_state.active_dashboard = "Upload Previous Paper"
+            st.session_state.active_dashboard = sidebar_options[0]
         selected = option_menu(
             menu_title=None,
-            options=["Upload Previous Paper", "Upload Syllabus", "Auto Question Paper", "Collaboration", "Admin", "Super Admin"],
-            icons=["file-earmark-arrow-up", "file-earmark-text", "robot", "people-fill", "shield-lock-fill", "key-fill"],
+            options=sidebar_options,
+            icons=sidebar_icons,
             menu_icon="cast",
             default_index=0
         )
