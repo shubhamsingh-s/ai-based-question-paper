@@ -55,4 +55,8 @@ python-dotenv
 cryptography
 
 # Performance optimization
-gunicorn 
+gunicorn
+
+# Added from the code block
+sentence-transformers
+PyPDF2 

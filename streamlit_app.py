@@ -1270,12 +1270,14 @@ def main_dashboard():
         "Upload Previous Paper",
         "Upload Syllabus",
         "Auto Question Paper",
+        "Predictive Analysis",
         "Collaboration"
     ]
     sidebar_icons = [
         "file-earmark-arrow-up",
         "file-earmark-text",
         "robot",
+        "bi bi-microscope",
         "people-fill"
     ]
     if user_role in ["admin", "super_admin"]:
@@ -1299,6 +1301,129 @@ def main_dashboard():
             st.session_state.current_user = None
             st.rerun()
     st.markdown(f"### Welcome, {st.session_state.current_user['name']}!")
+
+    if st.session_state.active_dashboard == "Predictive Analysis":
+        st.markdown("#### 🔬 Predictive Analysis (ML-powered)")
+        st.info("Upload previous year papers and syllabus to predict the most probable questions and classify them by Bloom's Taxonomy.")
+        st.markdown("**Step 1:** Upload previous year papers (PDF, DOCX, TXT or paste text)")
+        prev_file = st.file_uploader("Upload Previous Year Paper", type=["pdf", "docx", "txt"], key="predict_prev_upload")
+        prev_text = ""
+        if prev_file is not None:
+            if prev_file.type == "application/pdf":
+                import PyPDF2
+                reader = PyPDF2.PdfReader(prev_file)
+                prev_text = "\n".join([page.extract_text() for page in reader.pages if page.extract_text()])
+            elif prev_file.type == "application/vnd.openxmlformats-officedocument.wordprocessingml.document":
+                import docx
+                doc = docx.Document(prev_file)
+                prev_text = "\n".join([para.text for para in doc.paragraphs])
+            elif prev_file.type == "text/plain":
+                prev_text = prev_file.read().decode("utf-8")
+        prev_text_input = st.text_area("Or paste previous paper text here", height=150, key="predict_prev_text")
+        prev_content = prev_text or prev_text_input
+        st.session_state.predict_prev_content = prev_content
+        if prev_content:
+            st.markdown("**Preview: Previous Paper Content**")
+            st.write(prev_content[:1000] + ("..." if len(prev_content) > 1000 else ""))
+        else:
+            st.info("Upload a file or paste text to see the content here.")
+
+        st.markdown("**Step 2:** Upload syllabus (PDF, DOCX, TXT or paste text)")
+        syllabus_file = st.file_uploader("Upload Syllabus", type=["pdf", "docx", "txt"], key="predict_syllabus_upload")
+        syllabus_text = ""
+        if syllabus_file is not None:
+            if syllabus_file.type == "application/pdf":
+                import PyPDF2
+                reader = PyPDF2.PdfReader(syllabus_file)
+                syllabus_text = "\n".join([page.extract_text() for page in reader.pages if page.extract_text()])
+            elif syllabus_file.type == "application/vnd.openxmlformats-officedocument.wordprocessingml.document":
+                import docx
+                doc = docx.Document(syllabus_file)
+                syllabus_text = "\n".join([para.text for para in doc.paragraphs])
+            elif syllabus_file.type == "text/plain":
+                syllabus_text = syllabus_file.read().decode("utf-8")
+        syllabus_text_input = st.text_area("Or paste syllabus text here", height=150, key="predict_syllabus_text")
+        syllabus_content = syllabus_text or syllabus_text_input
+        st.session_state.predict_syllabus_content = syllabus_content
+        if syllabus_content:
+            st.markdown("**Preview: Syllabus Content**")
+            st.write(syllabus_content[:1000] + ("..." if len(syllabus_content) > 1000 else ""))
+        else:
+            st.info("Upload a file or paste text to see the content here.")
+
+        # --- ML Pipeline ---
+        import re
+        import numpy as np
+        import pandas as pd
+        from sentence_transformers import SentenceTransformer
+        from sklearn.metrics.pairwise import cosine_similarity
+        import nltk
+        nltk.download('punkt', quiet=True)
+        from nltk.tokenize import sent_tokenize
+
+        def extract_questions(text):
+            # Simple regex for questions ending with ? or numbered
+            questions = re.findall(r'(?:\d+\.\s*)?([A-Z][^\n\r\?]{10,}\?)', text)
+            # Also split by lines and look for question-like sentences
+            lines = text.split('\n')
+            for line in lines:
+                if len(line) > 20 and (line.strip().endswith('?') or line.strip().lower().startswith(('what', 'why', 'how', 'explain', 'describe', 'define', 'list', 'discuss', 'compare', 'differentiate'))):
+                    questions.append(line.strip())
+            # Remove duplicates
+            questions = list(set([q.strip() for q in questions if len(q.strip()) > 10]))
+            return questions
+
+        def bloom_classifier(question):
+            # Simple keyword-based classifier
+            q = question.lower()
+            if any(word in q for word in ["define", "list", "name", "identify", "recall"]):
+                return "Remember"
+            if any(word in q for word in ["explain", "summarize", "describe", "classify", "discuss"]):
+                return "Understand"
+            if any(word in q for word in ["apply", "solve", "use", "demonstrate", "calculate"]):
+                return "Apply"
+            if any(word in q for word in ["analyze", "compare", "contrast", "differentiate", "examine"]):
+                return "Analyze"
+            if any(word in q for word in ["evaluate", "justify", "critique", "assess", "argue"]):
+                return "Evaluate"
+            if any(word in q for word in ["create", "design", "formulate", "compose", "construct"]):
+                return "Create"
+            return "Other"
+
+        if prev_content and syllabus_content:
+            if st.button("🔬 Analyze", type="primary"):
+                with st.spinner("Running ML pipeline..."):
+                    # 1. Extract questions
+                    questions = extract_questions(prev_content)
+                    # 2. Extract topics
+                    topics = extract_topics_from_content(syllabus_content)
+                    # 3. Embed questions and topics
+                    model = SentenceTransformer('all-MiniLM-L6-v2')
+                    q_embeds = model.encode(questions)
+                    t_embeds = model.encode(topics)
+                    # 4. Map questions to topics
+                    sim_matrix = cosine_similarity(q_embeds, t_embeds)
+                    best_topic_idx = np.argmax(sim_matrix, axis=1)
+                    best_topic_score = np.max(sim_matrix, axis=1)
+                    mapped_topics = [topics[idx] if topics else "-" for idx in best_topic_idx]
+                    # 5. Frequency analysis (count duplicate questions)
+                    freq = pd.Series(questions).value_counts().to_dict()
+                    # 6. Bloom's classifier
+                    blooms = [bloom_classifier(q) for q in questions]
+                    # 7. Display results
+                    df = pd.DataFrame({
+                        "Question": questions,
+                        "Topic": mapped_topics,
+                        "Topic Similarity": best_topic_score,
+                        "Frequency": [freq[q] for q in questions],
+                        "Bloom Level": blooms
+                    })
+                    df = df.sort_values(["Frequency", "Topic Similarity"], ascending=[False, False])
+                    st.markdown("### 🧠 Predicted Most Probable Questions")
+                    st.dataframe(df, use_container_width=True)
+        else:
+            st.warning("Please upload both previous paper and syllabus to enable analysis.")
+        return
 
     if st.session_state.active_dashboard == "Upload Previous Paper":
         st.markdown("#### 📄 Upload Previous Question Paper")
