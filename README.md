@@ -1,267 +1,339 @@
-# 🤖 Question Paper Maker - AI-Powered Exam Generator
+# 🚀 QuestVibe - AI-Powered Question Paper Generation System
 
-[![Streamlit](https://img.shields.io/badge/Streamlit-FF4B4B?style=for-the-badge&logo=streamlit&logoColor=white)](https://streamlit.io/)
-[![Python](https://img.shields.io/badge/Python-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://python.org/)
-[![SQLite](https://img.shields.io/badge/SQLite-07405E?style=for-the-badge&logo=sqlite&logoColor=white)](https://sqlite.org/)
+[![Python](https://img.shields.io/badge/Python-3.8+-blue.svg)](https://www.python.org/downloads/)
+[![Streamlit](https://img.shields.io/badge/Streamlit-1.28+-red.svg)](https://streamlit.io/)
+[![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+[![Tests](https://img.shields.io/badge/Tests-Passing-brightgreen.svg)](https://github.com/shubhamsingh-s/ai-based-question-paper/actions)
 
-## 🌟 Live Demo
+> **Intelligent Question Paper Generation with AI Integration**
 
-**🚀 Your website will be live at:** `https://question-paper-maker-YOUR_USERNAME.streamlit.app`
+QuestVibe is a comprehensive AI-powered system that generates high-quality question papers from syllabus topics. It features ChatGPT integration, automated question generation, manual creation tools, pattern analysis, and real-time analytics.
 
-## 📋 Quick Start
+## 🌟 Key Features
 
-### 🎯 Deploy in 5 Minutes
+### 🤖 **AI-Powered Generation**
+- **ChatGPT Integration**: Intelligent question generation using OpenAI's GPT models
+- **Fallback System**: Seamless local generation when API is unavailable
+- **Context-Aware**: Questions based on actual syllabus content
+- **Quality Analysis**: AI-powered question quality assessment
 
-1. **Run the deployment script:**
+### 📚 **Multiple Generation Modes**
+- **Auto Generation**: Quick questions from predefined subjects
+- **Manual Creation**: Upload or paste syllabus for custom questions
+- **Pattern Analysis**: Analyze question distribution and difficulty
+- **Syllabus Processing**: Extract topics from uploaded documents
+
+### 🎯 **Question Types & Difficulty**
+- **MCQ**: Multiple choice questions with options
+- **Short Answer**: Brief explanation questions
+- **Long Answer**: Detailed analytical questions
+- **Case Study**: Real-world scenario questions
+- **Difficulty Levels**: Easy, Medium, Hard with Bloom's Taxonomy
+
+### 📊 **Analytics & Insights**
+- **Real-time Dashboard**: Live user activity and generation stats
+- **Quality Metrics**: Question quality scores and analysis
+- **Usage Analytics**: User behavior and popular subjects
+- **Export Options**: PDF, DOCX, and Excel formats
+
+### 🔐 **User Management**
+- **Simple Login**: Name and institution-based access
+- **Super Admin**: Hidden access for full system control
+- **Session Tracking**: User activity monitoring
+- **Database Management**: Comprehensive data control
+
+## 🚀 Quick Start
+
+### Prerequisites
+- Python 3.8 or higher
+- Internet connection (for ChatGPT features)
+- OpenAI API key (optional, for enhanced AI features)
+
+### Installation
+
+1. **Clone the repository**
    ```bash
-   DEPLOY_NOW.bat
+   git clone https://github.com/shubhamsingh-s/ai-based-question-paper.git
+   cd ai-based-question-paper
    ```
 
-2. **Or follow manual steps:**
-   - Create GitHub repository
-   - Push code to GitHub
-   - Deploy on [Streamlit Cloud](https://share.streamlit.io)
+2. **Install dependencies**
+   ```bash
+   pip install -r requirements.txt
+   ```
 
-## 🎨 Features
+3. **Run the application**
+   ```bash
+   streamlit run streamlit_app.py
+   ```
 
-### 🤖 Auto Question Generation
-- **Pre-loaded Syllabus Topics** for 4 subjects
-- **Smart Question Templates** with variety
-- **Bloom's Taxonomy Integration** (6 cognitive levels)
-- **Automatic Mark Allocation** based on question type
+4. **Access the application**
+   - Open your browser and go to `http://localhost:8501`
+   - Enter your name and institution
+   - Start generating questions!
 
-### 📝 Manual Question Creation
-- **File Upload Support** (PDF, DOCX, TXT)
-- **Custom Syllabus Input** with text area
-- **Real-time Analytics** and visualizations
-- **Multiple Export Formats** (Text, JSON, CSV)
+### 🎯 **Quick Demo**
 
-### 📊 Pattern Analysis
-- **Past Paper Analysis** for insights
-- **Topic Distribution** visualization
-- **Question Pattern Recognition**
-- **Trend Analysis** over time
+1. **Auto Generation**: Select a subject and generate questions instantly
+2. **Manual Creation**: Upload a syllabus file or paste content
+3. **ChatGPT Setup**: Use super admin access to configure API key
+4. **Export Results**: Download questions in your preferred format
 
-### 🎛️ Admin Dashboard
-- **Real-time Analytics** and metrics
-- **User Activity Tracking** with IP logging
-- **Question Generation Statistics**
-- **System Health Monitoring**
+## 📖 Detailed Usage Guide
 
-### 🗄️ Database Integration
-- **SQLite Database** for data persistence
-- **User Session Tracking** with unique IDs
-- **Generation Request Logging** with timestamps
-- **Analytics Data Storage** for insights
+### 🔧 **Setting Up ChatGPT Integration**
 
-## 🚀 Deployment Options
+1. **Get OpenAI API Key**
+   - Visit [OpenAI Platform](https://platform.openai.com/)
+   - Create an account and get your API key
+   - Note: Free tier available with limitations
 
-### 1. Streamlit Cloud (Recommended - FREE)
-- **Fastest deployment** - 5 minutes
-- **Free hosting** with generous limits
-- **Automatic HTTPS** and CDN
-- **Easy updates** with Git integration
+2. **Configure in QuestVibe**
+   - Login as super admin (hidden access)
+   - Go to Super Admin Dashboard
+   - Enter your API key in the ChatGPT section
+   - Test the connection
 
-### 2. Railway (FREE Tier)
-- **Simple deployment** from GitHub
-- **Auto-detection** of Python apps
-- **Custom domains** support
-- **Real-time logs** and monitoring
+3. **Enhanced Features**
+   - Intelligent question generation
+   - Context-aware responses
+   - Better question quality
+   - Advanced topic analysis
 
-### 3. Heroku (Paid)
-- **Professional hosting** with scaling
-- **Custom domains** and SSL
-- **Advanced monitoring** and analytics
-- **Team collaboration** features
+### 📝 **Question Generation Workflows**
 
-### 4. Render (FREE)
-- **Free tier** available
-- **Auto-deployment** from Git
-- **Custom domains** support
-- **Easy scaling** options
-
-## 📁 Project Structure
-
+#### **Auto Generation**
 ```
-question-paper-maker/
-├── streamlit_app.py          # 🚀 Main entry point for deployment
-├── simple_app.py            # 🎯 Core application logic
-├── database_manager.py      # 🗄️ Database operations
-├── database_setup.py        # 🔧 Database initialization
-├── requirements.txt         # 📦 Dependencies
-├── .streamlit/
-│   └── config.toml         # ⚙️ Streamlit configuration
-├── Procfile                # 🐳 For Heroku/Railway
-├── runtime.txt             # 🐍 Python version
-├── DEPLOY_NOW.bat          # 🚀 Quick deployment script
-├── DEPLOYMENT_GUIDE.md     # 📖 Detailed deployment guide
-└── README.md               # 📋 This file
+Subject Selection → Topic Selection → Question Types → Generate → Export
 ```
 
-## 🎯 Subjects Available
+#### **Manual Creation**
+```
+Upload Syllabus → Extract Topics → Configure Settings → Generate → Analyze
+```
 
-### 📚 Database Management System
-- Database Design and ER Model
-- Relational Algebra and SQL
-- Normalization and Database Design
-- Transaction Management
-- Concurrency Control
-- Database Security
-- Distributed Databases
-- Data Warehousing
-- Big Data and NoSQL
-- Database Administration
+#### **Pattern Analysis**
+```
+Upload Questions → Analyze Patterns → View Insights → Export Report
+```
 
-### 📊 Big Data Fundamentals
-- Introduction to Big Data
-- Hadoop Ecosystem
-- MapReduce Programming
-- HDFS Architecture
-- Spark Framework
-- Data Processing Pipelines
-- Machine Learning with Big Data
-- Data Visualization
-- Cloud Computing for Big Data
-- Big Data Analytics
+### 🎨 **User Interface Features**
 
-### 🌐 Computer Networks
-- Network Architecture
-- OSI Model and TCP/IP
-- Network Protocols
-- Routing Algorithms
-- Network Security
-- Wireless Networks
-- Network Management
-- Internet Technologies
-- Network Performance
-- Emerging Network Technologies
+- **Modern Design**: Beautiful gradient backgrounds and animations
+- **Responsive Layout**: Works on desktop, tablet, and mobile
+- **Intuitive Navigation**: Easy-to-use tabs and sections
+- **Real-time Feedback**: Progress indicators and success messages
+- **Error Handling**: Graceful error messages and fallbacks
 
-### 💻 Operating Systems
-- Process Management
-- Memory Management
-- File Systems
-- CPU Scheduling
-- Deadlock Prevention
-- Virtual Memory
-- Device Management
-- System Security
-- Distributed Systems
-- Real-time Systems
+## 🛠️ Development
 
-## 🎨 Question Types
+### **Running Tests**
+```bash
+# Run all tests
+python run_tests.py
 
-### 📝 Multiple Choice Questions (MCQ)
-- **Marks:** 1 per question
-- **Templates:** 5 different patterns
-- **Bloom's Levels:** All 6 levels
+# Run specific test file
+python test_questvibe.py
 
-### ✍️ Short Answer Questions
-- **Marks:** 3 per question
-- **Templates:** 5 different patterns
-- **Focus:** Understanding and application
+# Run with coverage
+pytest test_questvibe.py --cov=streamlit_app
+```
 
-### 📄 Long Answer Questions
-- **Marks:** 8 per question
-- **Templates:** 5 different patterns
-- **Focus:** Analysis and evaluation
+### **Code Quality**
+```bash
+# Format code
+black streamlit_app.py
 
-### 📋 Case Study Questions
-- **Marks:** 10 per question
-- **Templates:** 5 different patterns
-- **Focus:** Real-world application
+# Lint code
+flake8 streamlit_app.py
 
-## 🧠 Bloom's Taxonomy Integration
+# Sort imports
+isort streamlit_app.py
+```
 
-The system automatically assigns cognitive levels:
-- **Remember** - Recall facts and basic concepts
-- **Understand** - Explain ideas and concepts
-- **Apply** - Use information in new situations
-- **Analyze** - Draw connections among ideas
-- **Evaluate** - Justify a stand or decision
-- **Create** - Produce new or original work
+### **Development Setup**
+```bash
+# Install development dependencies
+pip install -r requirements-dev.txt
 
-## 📊 Analytics & Insights
+# Set up pre-commit hooks
+pre-commit install
+```
 
-### 🔍 What You Can Track
-- **User Sessions** and unique visitors
-- **Generation Requests** by type and subject
-- **Question Type Distribution** across subjects
-- **Popular Topics** and difficulty preferences
-- **Export Format Preferences** (Text, JSON, CSV)
-- **System Performance** and response times
+## 📊 **System Architecture**
 
-### 📈 Real-time Dashboard
-- **Live Metrics** showing current usage
-- **Activity Timeline** with interactive charts
-- **Popular Subjects** visualization
-- **Question Type Analysis** with pie charts
-- **User Behavior Patterns** and trends
+```
+QuestVibe System
+├── Frontend (Streamlit)
+│   ├── User Interface
+│   ├── Form Handling
+│   └── Real-time Updates
+├── Backend (Python)
+│   ├── ChatGPT Integration
+│   ├── Question Generation
+│   ├── Database Management
+│   └── File Processing
+├── Database (SQLite)
+│   ├── User Data
+│   ├── Question Analytics
+│   └── Session Tracking
+└── External APIs
+    ├── OpenAI ChatGPT
+    └── File Processing Services
+```
 
-## 🔒 Security & Privacy
+## 🔧 **Configuration**
 
-- **No Personal Data Collection** - Only anonymous analytics
-- **Secure Database** - SQLite with proper access controls
-- **HTTPS Enabled** - All platforms provide SSL certificates
-- **No API Keys Required** - Self-contained application
-- **Session-based Tracking** - No persistent user identification
+### **Environment Variables**
+```bash
+# Optional: Set OpenAI API key
+export OPENAI_API_KEY="your-api-key-here"
 
-## 🛠️ Technical Stack
+# Optional: Set database path
+export QUESTVIBE_DB_PATH="path/to/database.db"
+```
 
-- **Frontend:** Streamlit (Python web framework)
-- **Backend:** Python 3.9+
-- **Database:** SQLite with SQLAlchemy
-- **Visualization:** Plotly for interactive charts
-- **Styling:** Custom CSS with animations
-- **Deployment:** Streamlit Cloud, Railway, Heroku, Render
+### **Super Admin Access**
+- **Username**: `admin`
+- **Password**: `questvibe2024`
+- **Access**: Hidden login option for full system control
 
-## 🚨 Troubleshooting
+## 📈 **Analytics & Metrics**
 
-### Common Issues & Solutions
+### **Question Quality Metrics**
+- **Quality Score**: 0-100 based on AI analysis
+- **Topic Coverage**: Number of syllabus topics covered
+- **Difficulty Distribution**: Balance across difficulty levels
+- **Type Distribution**: Mix of question types
 
-1. **Import Errors**
-   - Ensure all files are in the same directory
-   - Check `requirements.txt` has all dependencies
+### **User Analytics**
+- **Active Users**: Real-time user count
+- **Generation Stats**: Questions generated per session
+- **Popular Subjects**: Most frequently used subjects
+- **Session Duration**: Average time spent in app
 
-2. **Database Issues**
-   - Database will be created automatically
-   - Sample data will be loaded on first run
+## 🚀 **Deployment**
 
-3. **Port Issues**
-   - Use `$PORT` environment variable for cloud platforms
-   - Local development uses port 8501
+### **Streamlit Cloud**
+1. Connect your GitHub repository
+2. Deploy automatically on push to main
+3. Configure environment variables
+4. Access your live application
 
-4. **Memory Issues**
-   - Streamlit Cloud has memory limits
-   - Optimize large file uploads
+### **Local Deployment**
+```bash
+# Production mode
+streamlit run streamlit_app.py --server.port 8501 --server.address 0.0.0.0
 
-## 📞 Support
+# With custom config
+streamlit run streamlit_app.py --server.port 8501 --server.address 0.0.0.0 --server.maxUploadSize 200
+```
 
-### Getting Help
-1. **Check Documentation** - See `DEPLOYMENT_GUIDE.md`
-2. **Review Logs** - Check platform deployment logs
-3. **Verify Files** - Ensure all files are properly uploaded
-4. **Test Locally** - Run `streamlit run streamlit_app.py` first
+### **Docker Deployment**
+```dockerfile
+FROM python:3.9-slim
+WORKDIR /app
+COPY requirements.txt .
+RUN pip install -r requirements.txt
+COPY . .
+EXPOSE 8501
+CMD ["streamlit", "run", "streamlit_app.py", "--server.port=8501", "--server.address=0.0.0.0"]
+```
 
-### Community
-- **GitHub Issues** - Report bugs and request features
-- **Streamlit Community** - Get help with Streamlit-specific issues
-- **Documentation** - Comprehensive guides and tutorials
+## 🤝 **Contributing**
 
-## 🎉 Success Stories
+We welcome contributions! Please see our [Contributing Guidelines](CONTRIBUTING.md) for details.
 
-Once deployed, your Question Paper Maker will be:
-- **Publicly Accessible** to anyone with the URL
-- **Fully Functional** with all features enabled
-- **Database Enabled** for comprehensive analytics
-- **Mobile Responsive** for all devices
-- **Free to Use** (depending on platform)
+### **Development Workflow**
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Add tests for new features
+5. Submit a pull request
 
-## 📄 License
+### **Code Standards**
+- Follow PEP 8 style guidelines
+- Add docstrings to all functions
+- Include type hints where possible
+- Write comprehensive tests
 
-This project is open source and available under the MIT License.
+## 📋 **Testing**
+
+### **Test Coverage**
+- **Unit Tests**: Individual component testing
+- **Integration Tests**: End-to-end workflow testing
+- **API Tests**: ChatGPT integration testing
+- **UI Tests**: User interface functionality
+
+### **Running Tests**
+```bash
+# All tests
+python run_tests.py
+
+# Specific test categories
+python -m pytest test_questvibe.py::TestQuestVibeSystem
+python -m pytest test_questvibe.py::TestQuestVibeIntegration
+```
+
+## 🔒 **Security**
+
+### **Data Protection**
+- **No Sensitive Data Storage**: API keys not stored in plain text
+- **Session Management**: Secure user session handling
+- **Input Validation**: All user inputs validated
+- **Error Handling**: No sensitive information in error messages
+
+### **API Security**
+- **Rate Limiting**: Built-in protection against abuse
+- **Fallback Systems**: Graceful degradation when APIs fail
+- **Secure Communication**: HTTPS for all external calls
+
+## 📞 **Support**
+
+### **Getting Help**
+- **Documentation**: Check this README and other docs
+- **Issues**: Report bugs on GitHub Issues
+- **Discussions**: Use GitHub Discussions for questions
+- **Email**: Contact the development team
+
+### **Common Issues**
+
+#### **ChatGPT API Errors**
+- Check your API key is correct
+- Verify you have sufficient credits
+- Ensure internet connection is stable
+- System will fall back to local generation
+
+#### **File Upload Issues**
+- Ensure file is in supported format (.txt, .pdf, .docx)
+- Check file size (max 200MB)
+- Verify file is not corrupted
+
+#### **Performance Issues**
+- Clear browser cache
+- Restart the application
+- Check system resources
+
+## 📄 **License**
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## 🙏 **Acknowledgments**
+
+- **OpenAI**: For providing the ChatGPT API
+- **Streamlit**: For the amazing web framework
+- **Contributors**: All who have helped improve QuestVibe
+- **Users**: For valuable feedback and suggestions
+
+## 📊 **Project Status**
+
+- **Version**: 2.0.0
+- **Status**: Production Ready
+- **Last Updated**: December 2024
+- **Maintainer**: QuestVibe Development Team
 
 ---
 
-**🎯 Ready to deploy? Run `DEPLOY_NOW.bat` for the fastest setup!**
+**Made with ❤️ by the QuestVibe Team**
 
-**🌟 Star this repository if you find it helpful!** 
+*Empowering educators with AI-driven question paper generation* 

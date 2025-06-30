@@ -12,6 +12,9 @@ import os
 import requests
 import openai
 from typing import List, Dict, Any
+from advanced_analytics import advanced_analytics_dashboard
+from export_system import enhanced_export_dashboard
+from collaboration_system import collaboration_dashboard
 
 # Page configuration
 st.set_page_config(
@@ -1266,493 +1269,124 @@ if 'questvibe_chatgpt' not in st.session_state:
     st.session_state.questvibe_chatgpt = QuestVibeChatGPT()
 
 def main():
-    if 'authenticated' not in st.session_state:
-        st.session_state.authenticated = False
+    """Main application function"""
+    # Initialize session state
     if 'current_user' not in st.session_state:
         st.session_state.current_user = None
-
-    if not st.session_state.authenticated:
-        st.markdown("""
-        <div style="text-align: center; padding: 2rem;">
-            <h1 style="background: linear-gradient(45deg, #FF6B6B, #4ECDC4, #45B7D1, #96CEB4); background-size: 300% 300%; -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; animation: gradient 3s ease infinite; font-size: 4rem; font-weight: 800; margin-bottom: 1rem;">QuestVibe</h1>
-            <p style="font-size: 1.5rem; color: white; margin-bottom: 3rem;">AI-Powered Question Paper Generator</p>
-        </div>
-        """, unsafe_allow_html=True)
-        with st.container():
-            col1, col2, col3 = st.columns([1, 2, 1])
-            with col2:
-                st.markdown("""
-                <div style="background: rgba(255, 255, 255, 0.2); backdrop-filter: blur(20px); border-radius: 20px; padding: 2rem; border: 1px solid rgba(255, 255, 255, 0.4); box-shadow: 0 8px 32px rgba(0,0,0,0.2);">
-                    <h2 style="text-align: center; color: white; margin-bottom: 2rem;">👋 Welcome to QuestVibe</h2>
-                </div>
-                """, unsafe_allow_html=True)
-                with st.form("login_form"):
-                    name = st.text_input("👤 Your Name", placeholder="Enter your full name")
-                    institution = st.text_input("🏫 Institution", placeholder="University/College/School name")
-                    col1, col2, col3 = st.columns(3)
-                    with col2:
-                        submit_button = st.form_submit_button("Start Using QuestVibe", type="primary", use_container_width=True)
-                    if submit_button:
-                        if name.strip() and institution.strip():
-                            # Check if this is a super user login attempt
-                            if (name.strip().lower() == SUPER_USER["username"].lower() and 
-                                institution.strip() == SUPER_USER["password"]):
-                                # Super user access
-                                st.session_state.authenticated = True
-                                st.session_state.current_user = {
-                                    "id": 0,
-                                    "name": SUPER_USER["name"],
-                                    "institution": "System Administration",
-                                    "role": "super_admin",
-                                    "session_id": 0
-                                }
-                                st.success("🔓 Super Admin access granted!")
-                                st.rerun()
-                            else:
-                                # Regular user login
-                                # Save user to database
-                                user_id = save_user_to_database(name.strip(), institution.strip())
-                                session_id = log_session(user_id)
-                                
-                                st.session_state.authenticated = True
-                                st.session_state.current_user = {
-                                    "id": user_id,
-                                    "name": name.strip(),
-                                    "institution": institution.strip(),
-                                    "role": "user",
-                                    "session_id": session_id
-                                }
-                                st.success(f"✅ Welcome to QuestVibe, {name.strip()}!")
-                                st.rerun()
-                        else:
-                            st.error("❌ Please enter both your name and institution!")
-                with st.expander("ℹ️ About QuestVibe"):
-                    st.markdown("""
-                    **QuestVibe** is an AI-powered question paper generator that helps educators create comprehensive exams.
-                    
-                    **Features:**
-                    - 🤖 **Auto Generation**: Generate questions from predefined topics
-                    - 📝 **Manual Creation**: Create questions from your own syllabus
-                    - 📊 **Pattern Analysis**: Analyze exam patterns and trends
-                    - 🗄️ **Database Tracking**: All your activities are securely stored
-                    
-                    **Your data is safe and will only be used to improve your experience.**
-                    """)
-                
-                st.markdown("---")
-                st.markdown("### ✨ Features Preview")
-                col1, col2, col3 = st.columns(3)
-                with col1:
-                    st.markdown("""
-                    <div style="background: rgba(255, 255, 255, 0.15); border-radius: 15px; padding: 1rem; text-align: center; border: 1px solid rgba(255, 255, 255, 0.3);">
-                        <h4 style="color: white;">🤖 Auto Generation</h4>
-                        <p style="color: white;">AI-powered question paper creation</p>
-                    </div>
-                    """, unsafe_allow_html=True)
-                with col2:
-                    st.markdown("""
-                    <div style="background: rgba(255, 255, 255, 0.15); border-radius: 15px; padding: 1rem; text-align: center; border: 1px solid rgba(255, 255, 255, 0.3);">
-                        <h4 style="color: white;">📝 Manual Creation</h4>
-                        <p style="color: white;">Custom question paper design</p>
-                    </div>
-                    """, unsafe_allow_html=True)
-                with col3:
-                    st.markdown("""
-                    <div style="background: rgba(255, 255, 255, 0.15); border-radius: 15px; padding: 1rem; text-align: center; border: 1px solid rgba(255, 255, 255, 0.3);">
-                        <h4 style="color: white;">📊 Pattern Analysis</h4>
-                        <p style="color: white;">Smart exam pattern insights</p>
-                    </div>
-                    """, unsafe_allow_html=True)
-        return
-    # If authenticated, show the full dashboard
-    col1, col2, col3, col4 = st.columns([3, 1, 1, 1])
-    
-    with col1:
-        if st.session_state.current_user:
-            st.markdown(f"### 👋 Welcome, {st.session_state.current_user['name']}")
-            st.markdown(f"🏫 **Institution:** {st.session_state.current_user['institution']}")
-    
-    with col4:
-        if st.button("🚪 Logout", type="secondary"):
-            st.session_state.authenticated = False
-            st.session_state.current_user = None
-            st.rerun()
-    
-    # Initialize session state for navigation
-    if 'show_auto_generation' not in st.session_state:
-        st.session_state.show_auto_generation = False
     if 'show_manual_creation' not in st.session_state:
         st.session_state.show_manual_creation = False
     if 'show_pattern_analysis' not in st.session_state:
         st.session_state.show_pattern_analysis = False
-    if 'show_admin' not in st.session_state:
-        st.session_state.show_admin = False
-    if 'show_super_admin' not in st.session_state:
-        st.session_state.show_super_admin = False
+    if 'questvibe_chatgpt' not in st.session_state:
+        st.session_state.questvibe_chatgpt = QuestVibeChatGPT()
+    if 'questvibe_ai_database' not in st.session_state:
+        st.session_state.questvibe_ai_database = QuestVibeAIDatabase()
     
-    # Check which page to show
-    if st.session_state.show_auto_generation:
-        auto_generation_page()
-        return
-    elif st.session_state.show_manual_creation:
-        manual_creation_page()
-        return
-    elif st.session_state.show_pattern_analysis:
-        pattern_analysis_page()
-        return
-    elif st.session_state.show_admin:
-        admin_dashboard()
-        return
-    elif st.session_state.show_super_admin:
-        super_admin_dashboard()
-        return
+    for key in [
+        "show_manual_creation", "show_pattern_analysis", "show_advanced_analytics",
+        "show_export_dashboard", "show_collaboration"
+    ]:
+        if key not in st.session_state:
+            st.session_state[key] = False
     
-    # Main dashboard
+    # Page header with enhanced styling
     st.markdown("""
-    # Welcome to QuestVibe!
-
-    This intelligent system helps you create comprehensive question papers based on your syllabus topics.
-    """)
-
-    col1, col2, col3, col4 = st.columns(4)
-
-    with col1:
-        st.markdown("### 📚 Syllabus-Based")
-        st.write("Generate questions from your specific syllabus topics")
-
-    with col2:
-        st.markdown("### 🤖 Auto Generation")
-        st.write("Fully automated question paper creation with predefined topics")
-
-    with col3:
-        st.markdown("### 🎯 Multiple Types")
-        st.write("Support for MCQ, Short Answer, Long Answer, and Case Study questions")
-
-    with col4:
-        st.markdown("### 📊 Smart Analysis")
-        st.write("Get detailed analytics and visualizations with Bloom's taxonomy")
-
-    st.markdown("---")
-    st.markdown("### 🚀 Get Started")
-
-    col1, col2, col3 = st.columns(3)
-
-    with col1:
-        st.markdown("### 🤖 Auto Generation")
-        st.write("Generate questions automatically from predefined syllabus topics")
-        if st.button("Start Auto Generation", key="auto_btn", type="primary"):
-            st.session_state.show_auto_generation = True
-            st.rerun()
-
-    with col2:
-        st.markdown("### 📝 Manual Creation")
-        st.write("Create questions manually by uploading or pasting syllabus")
-        if st.button("Start Creating", key="create_btn"):
-            st.session_state.show_manual_creation = True
-            st.rerun()
-
-    with col3:
-        st.markdown("### 📊 Pattern Analysis")
-        st.write("Analyze past papers to understand exam patterns")
-        if st.button("Start Analysis", key="analyze_btn"):
-            st.session_state.show_pattern_analysis = True
-            st.rerun()
-
-    st.markdown("---")
-    st.markdown("### 📈 System Overview")
-
-    col1, col2, col3, col4 = st.columns(4)
-
-    with col1:
-        st.metric("Subjects Available", "5+", "📚")
-
-    with col2:
-        st.metric("Total Topics", "50+", "🎯")
-
-    with col3:
-        st.metric("Question Types", "4 Supported", "📝")
-
-    with col4:
-        st.metric("Bloom's Levels", "6 Levels", "🧠")
-
-    st.markdown("---")
-    
-    # AI Database System Information
-    st.markdown("### 🤖 AI Database System")
-    st.write("QuestVibe uses an intelligent AI system that automatically populates the database with comprehensive engineering curriculum data.")
-    
-    # Show AI database statistics
-    col1, col2, col3, col4 = st.columns(4)
-    
-    with col1:
-        total_branches = len(st.session_state.questvibe_ai_db.engineering_subjects)
-        st.metric("Engineering Branches", total_branches, "🏗️")
-    
-    with col2:
-        total_subjects = sum(len(data["subjects"]) for data in st.session_state.questvibe_ai_db.engineering_subjects.values())
-        st.metric("Total Subjects", total_subjects, "📚")
-    
-    with col3:
-        total_topics = sum(len(topics) for branch_data in st.session_state.questvibe_ai_db.engineering_subjects.values() 
-                          for topics in branch_data.get("exam_topics", {}).values())
-        st.metric("Exam Topics", total_topics, "🎯")
-    
-    with col4:
-        st.metric("AI Status", "Active", "🤖")
-    
-    # Show available branches
-    st.markdown("**🏗️ Available Engineering Branches:**")
-    branch_cols = st.columns(3)
-    branches = list(st.session_state.questvibe_ai_db.engineering_subjects.keys())
-    
-    for i, branch in enumerate(branches):
-        with branch_cols[i % 3]:
-            st.markdown(f"• **{branch}**")
-            subject_count = len(st.session_state.questvibe_ai_db.engineering_subjects[branch]["subjects"])
-            st.write(f"  {subject_count} subjects")
-    
-    st.markdown("---")
-
-    # Admin section
-    if st.session_state.current_user and st.session_state.current_user.get('role') == 'admin':
-        st.markdown("### 🔧 Admin Tools")
-        if st.button("📊 View Database Analytics", type="secondary"):
-            st.session_state.show_admin = True
-            st.rerun()
-    
-    # Super Admin section (only for super_admin role)
-    if st.session_state.current_user and st.session_state.current_user.get('role') == 'super_admin':
-        st.markdown("### 🔓 Super Admin Tools")
-        col1, col2 = st.columns(2)
-        with col1:
-            if st.button("📊 View Database Analytics", type="secondary"):
-                st.session_state.show_admin = True
-                st.rerun()
-        with col2:
-            if st.button("🔓 Full Database Access", type="primary"):
-                st.session_state.show_super_admin = True
-                st.rerun()
-    
-    st.markdown("---")
-    st.markdown("""
-    <div class="footer">
-        <p>🤖 Powered by AI • 🚀 Fully Automated • 📊 Smart Analytics • 🧠 Bloom's Taxonomy</p>
+    <div style="text-align: center; padding: 2rem 0;">
+        <h1 style="margin-bottom: 0.5rem;">🚀 QuestVibe</h1>
+        <p style="font-size: 1.2rem; color: #ffffff; margin-bottom: 2rem;">
+            AI-Powered Question Paper Generation System
+        </p>
+        <div style="display: flex; justify-content: center; gap: 1rem; margin-bottom: 2rem;">
+            <span style="background: rgba(255,255,255,0.2); padding: 0.5rem 1rem; border-radius: 20px; font-size: 0.9rem;">
+                🤖 ChatGPT Integration
+            </span>
+            <span style="background: rgba(255,255,255,0.2); padding: 0.5rem 1rem; border-radius: 20px; font-size: 0.9rem;">
+                📊 Real-time Analytics
+            </span>
+            <span style="background: rgba(255,255,255,0.2); padding: 0.5rem 1rem; border-radius: 20px; font-size: 0.9rem;">
+                🎯 Multiple Question Types
+            </span>
+        </div>
     </div>
     """, unsafe_allow_html=True)
-
-def auto_generation_page():
-    st.markdown("## 🤖 Auto Question Generation")
-    st.write("Generate questions automatically from AI-populated engineering subjects and topics")
     
-    # Get engineering branches from AI database
-    engineering_branches = list(st.session_state.questvibe_ai_db.engineering_subjects.keys())
-    
-    col1, col2 = st.columns(2)
-    
-    with col1:
-        # Select engineering branch
-        selected_branch = st.selectbox("🏗️ Select Engineering Branch", engineering_branches)
+    # Login section with enhanced UX
+    if st.session_state.current_user is None:
+        st.markdown("## 👋 Welcome to QuestVibe")
         
-        # Get subjects for selected branch
-        subjects = st.session_state.questvibe_ai_db.get_subjects_by_branch(selected_branch)
-        subject = st.selectbox("📚 Select Subject", subjects)
+        # Help section
+        with st.expander("ℹ️ How to get started", expanded=False):
+            st.markdown("""
+            **Quick Start Guide:**
+            1. **Enter your details** - Name and institution
+            2. **Choose generation mode** - Auto or Manual
+            3. **Configure settings** - Subject, topics, question types
+            4. **Generate questions** - AI-powered question creation
+            5. **Export results** - Download in your preferred format
+            
+            **💡 Pro Tips:**
+            - Use **Auto Generation** for quick questions from predefined subjects
+            - Use **Manual Creation** to upload your own syllabus
+            - Enable **ChatGPT** for enhanced AI-powered questions
+            - Check **Analytics** to see usage patterns and quality metrics
+            """)
         
-        num_questions = st.slider("📝 Number of Questions", 5, 50, 20)
-    
-    with col2:
-        question_types = st.multiselect(
-            "🎯 Question Types",
-            ["MCQ", "Short Answer", "Long Answer", "Case Study"],
-            default=["MCQ", "Short Answer"]
-        )
-        
-        # Show available topics for selected subject
-        if subject:
-            topics = st.session_state.questvibe_ai_db.get_topics_by_subject(subject)
-            if topics:
-                st.markdown("**📖 Available Topics:**")
-                for topic in topics[:5]:  # Show first 5 topics
-                    st.write(f"• {topic}")
-                if len(topics) > 5:
-                    st.write(f"*... and {len(topics) - 5} more topics*")
-    
-    if st.button("🚀 Generate Questions", type="primary"):
-        # Check if user is super admin
-        is_super_admin = (hasattr(st.session_state, 'current_user') and 
-                         st.session_state.current_user and 
-                         st.session_state.current_user.get('role') == 'super_admin')
-        
-        # Show appropriate loading message
-        if is_super_admin:
-            with st.spinner("🤖 AI is generating intelligent questions using ChatGPT..."):
-                # Log the generation activity to database
-                if st.session_state.current_user:
-                    log_question_generation(
-                        st.session_state.current_user['id'],
-                        subject,
-                        num_questions,
-                        question_types
-                    )
-                
-                # Get topics from AI database
-                topics = st.session_state.questvibe_ai_db.get_topics_by_subject(subject)
-                if not topics:
-                    # Fallback to hardcoded topics if none in database
-                    topics = ["Introduction", "Basic Concepts", "Advanced Topics", "Applications", "Case Studies"]
-                
-                # Generate questions using ChatGPT
-                questions = st.session_state.questvibe_chatgpt.generate_questions(
-                    subject, topics, num_questions, question_types
-                )
-        else:
-            # For normal users, show generic AI message
-            with st.spinner("🤖 AI is generating intelligent questions..."):
-                # Log the generation activity to database
-                if st.session_state.current_user:
-                    log_question_generation(
-                        st.session_state.current_user['id'],
-                        subject,
-                        num_questions,
-                        question_types
-                    )
-                
-                # Get topics from AI database
-                topics = st.session_state.questvibe_ai_db.get_topics_by_subject(subject)
-                if not topics:
-                    # Fallback to hardcoded topics if none in database
-                    topics = ["Introduction", "Basic Concepts", "Advanced Topics", "Applications", "Case Studies"]
-                
-                # Generate questions using ChatGPT (with silent fallback for normal users)
-                questions = st.session_state.questvibe_chatgpt.generate_questions(
-                    subject, topics, num_questions, question_types
-                )
-        
-        # Analyze question quality
-        analysis = st.session_state.questvibe_chatgpt.analyze_question_quality(questions)
-        
-        # Show success message based on user role
-        if is_super_admin:
-            st.success(f"✅ Generated {len(questions)} intelligent questions using ChatGPT!")
-        else:
-            st.success(f"✅ Generated {len(questions)} intelligent questions!")
-        
-        st.info(f"🤖 AI used {len(topics)} topics from {selected_branch} - {subject}")
-        
-        # Show quality analysis
-        col1, col2, col3, col4 = st.columns(4)
-        with col1:
-            st.metric("Quality Score", f"{analysis['quality_score']}/100", "⭐")
+        # Login form with better UX
+        col1, col2, col3 = st.columns([1, 2, 1])
         with col2:
-            st.metric("Topics Covered", len(analysis['topic_coverage']), "🎯")
-        with col3:
-            st.metric("Question Types", len(analysis['type_distribution']), "📝")
-        with col4:
-            st.metric("Difficulty Levels", len(analysis['difficulty_distribution']), "📊")
-        
-        if st.session_state.current_user:
-            st.info(f"📊 Activity logged for {st.session_state.current_user['name']} from {st.session_state.current_user['institution']}")
-        
-        # Display questions with enhanced formatting
-        st.markdown("### 📋 Generated Questions")
-        
-        for i, q in enumerate(questions, 1):
-            with st.expander(f"Question {i}: {q.get('type', 'Question')} - {q.get('difficulty', 'Medium')} Difficulty", expanded=True):
-                st.markdown(f"**{q['question']}**")
+            with st.container():
+                st.markdown("### 📝 Enter Your Details")
                 
-                # Show question metadata
-                col1, col2, col3 = st.columns(3)
-                with col1:
-                    st.write(f"**Type:** {q.get('type', 'Unknown')}")
-                with col2:
-                    st.write(f"**Difficulty:** {q.get('difficulty', 'Medium')}")
-                with col3:
-                    st.write(f"**Bloom Level:** {q.get('bloom_level', 'Understand')}")
+                # Name input with help
+                name = st.text_input(
+                    "👤 Your Name",
+                    placeholder="Enter your full name",
+                    help="This will be used to track your question generation activity"
+                )
                 
-                # Show options for MCQ
-                if q.get('type') == 'MCQ' and q.get('options'):
-                    st.write("**Options:**")
-                    for option in q['options']:
-                        st.write(f"   {option}")
-                    
-                    if q.get('correct_answer'):
-                        st.success(f"**Correct Answer:** {q.get('correct_answer')}")
+                # Institution input with help
+                institution = st.text_input(
+                    "🏫 Institution",
+                    placeholder="Your school, college, or organization",
+                    help="This helps us understand our user base and improve the system"
+                )
                 
-                st.write(f"**Topic:** {q.get('topic', 'General')}")
+                # Login button with enhanced styling
+                if st.button("🚀 Start Using QuestVibe", type="primary", use_container_width=True):
+                    if name and institution:
+                        # Save user to database
+                        user_id = save_user_to_database(name, institution)
+                        st.session_state.current_user = {
+                            'id': user_id,
+                            'name': name,
+                            'institution': institution,
+                            'role': 'user'
+                        }
+                        
+                        # Log session
+                        log_session(user_id)
+                        
+                        st.success(f"✅ Welcome, {name}! You're all set to generate amazing questions.")
+                        st.rerun()
+                    else:
+                        st.error("❌ Please enter both your name and institution.")
+                
+                # Super admin access (hidden)
                 st.markdown("---")
-    
-    if st.button("🔙 Back to Dashboard"):
-        st.session_state.show_auto_generation = False
-        st.rerun()
-
-def manual_creation_page():
-    st.markdown("## 📝 Manual Question Creation")
-    st.write("Create questions manually by uploading or pasting syllabus")
-    
-    # Initialize variables
-    content = ""
-    topics = []
-    syllabus_text = ""
-    
-    tab1, tab2 = st.tabs(["📄 Upload Syllabus", "✏️ Paste Syllabus"])
-    
-    with tab1:
-        uploaded_file = st.file_uploader("Choose a file", type=['txt', 'pdf', 'docx'])
-        if uploaded_file is not None:
-            st.success(f"✅ File uploaded: {uploaded_file.name}")
-            
-            # Process uploaded file
-            try:
-                if uploaded_file.type == "text/plain":
-                    # Process text file
-                    content = uploaded_file.read().decode('utf-8')
-                    st.write("**📖 Extracted Content:**")
-                    st.text_area("File Content", content, height=200, disabled=True)
+                with st.expander("🔧 Advanced Access", expanded=False):
+                    st.markdown("*For system administrators only*")
+                    admin_name = st.text_input("Admin Username", key="admin_username")
+                    admin_password = st.text_input("Admin Password", type="password", key="admin_password")
                     
-                    # Extract topics from content
-                    topics = extract_topics_from_content(content)
-                    st.write(f"**🎯 Extracted Topics:** {len(topics)} topics found")
-                    for topic in topics[:10]:  # Show first 10 topics
-                        st.write(f"• {topic}")
-                    if len(topics) > 10:
-                        st.write(f"*... and {len(topics) - 10} more topics*")
-                    
-                elif uploaded_file.type == "application/pdf":
-                    st.info("📄 PDF processing will be implemented soon. Please use text files for now.")
-                    content = ""
-                    topics = []
-                    
-                elif uploaded_file.type == "application/vnd.openxmlformats-officedocument.wordprocessingml.document":
-                    st.info("📄 DOCX processing will be implemented soon. Please use text files for now.")
-                    content = ""
-                    topics = []
-                    
-                else:
-                    st.error("❌ Unsupported file type. Please upload a .txt file.")
-                    content = ""
-                    topics = []
-                    
-            except Exception as e:
-                st.error(f"❌ Error processing file: {str(e)}")
-                content = ""
-                topics = []
-    
-    with tab2:
-        syllabus_text = st.text_area("Paste your syllabus here:", height=200)
-        if syllabus_text:
-            st.write("**📖 Syllabus Content:**")
-            st.write(syllabus_text)
-            
-            # Extract topics from pasted text
-            topics = extract_topics_from_content(syllabus_text)
-            st.write(f"**🎯 Extracted Topics:** {len(topics)} topics found")
-            for topic in topics[:10]:  # Show first 10 topics
-                st.write(f"• {topic}")
-            if len(topics) > 10:
-                st.write(f"*... and {len(topics) - 10} more topics*")
-    
-    # Question generation section (appears if content is available)
-    if content or syllabus_text:
-        st.markdown("---")
+                    if st.button("🔐 Admin Login", key="admin_login"):
+                        if admin_name == "admin" and admin_password == "questvibe2024":
+                            st.session_state.current_user = {
+                                'id': 999,
+                                'name': 'Super Admin',
+                                'institution': 'QuestVibe System',
+                                'role': 'super_admin'
+                            }
+                            st.success("🔐 Super Admin access granted!")
         st.markdown("### 🚀 Generate Questions from Syllabus")
         
         # Get the content and topics
@@ -1867,6 +1501,49 @@ def manual_creation_page():
     if st.button("🔙 Back to Dashboard"):
         st.session_state.show_manual_creation = False
         st.rerun()
+
+    col4, col5, col6 = st.columns(3)
+
+    with col4:
+        if st.button("📊 Advanced Analytics", use_container_width=True, help="View advanced analytics and trends"):
+            st.session_state.show_advanced_analytics = True
+            st.session_state.show_manual_creation = False
+            st.session_state.show_pattern_analysis = False
+            st.session_state.show_export_dashboard = False
+            st.session_state.show_collaboration = False
+            st.rerun()
+
+    with col5:
+        if st.button("📤 Export System", use_container_width=True, help="Export questions in multiple formats"):
+            st.session_state.show_export_dashboard = True
+            st.session_state.show_manual_creation = False
+            st.session_state.show_pattern_analysis = False
+            st.session_state.show_advanced_analytics = False
+            st.session_state.show_collaboration = False
+            st.rerun()
+
+    with col6:
+        if st.button("🤝 Collaboration", use_container_width=True, help="Collaborate with others in real-time"):
+            st.session_state.show_collaboration = True
+            st.session_state.show_manual_creation = False
+            st.session_state.show_pattern_analysis = False
+            st.session_state.show_advanced_analytics = False
+            st.session_state.show_export_dashboard = False
+            st.rerun()
+
+    if st.session_state.get("show_advanced_analytics"):
+        advanced_analytics_dashboard()
+    elif st.session_state.get("show_export_dashboard"):
+        enhanced_export_dashboard()
+    elif st.session_state.get("show_collaboration"):
+        collaboration_dashboard()
+    elif st.session_state.show_manual_creation:
+        manual_creation_page()
+    elif st.session_state.show_pattern_analysis:
+        pattern_analysis_page()
+    else:
+        # Default dashboard or instructions
+        pass
 
 def extract_topics_from_content(content: str) -> List[str]:
     """Extract topics from syllabus content using AI processing"""

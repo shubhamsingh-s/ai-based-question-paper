@@ -1,4 +1,0 @@
-This is a sample text file for testing.
-It contains a few lines of text.
-Question 1: What is AI?
-Question 2: Define machine learning. 
