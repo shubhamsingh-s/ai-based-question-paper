@@ -1263,7 +1263,7 @@ if 'questvibe_chatgpt' not in st.session_state:
 
 def main_dashboard():
     """The main dashboard shown after the user logs in."""
-    st.sidebar.title("QuestVibe Menu")
+    st.sidebar.title("Menu")
     with st.sidebar:
         # Use a more consistent way to manage dashboard state
         if 'active_dashboard' not in st.session_state:
