@@ -1386,9 +1386,15 @@ def login_page():
                 admin_password = st.text_input("Admin Password", type="password", key="admin_password")
                 
                 if st.button("🔐 Admin Login", key="admin_login"):
-                    if admin_name == "admin" and admin_password == "questvibe2024":
+                    # Securely get super admin credentials from Streamlit Secrets
+                    super_admin_username = st.secrets.get("SUPER_ADMIN_USERNAME", "default_user")
+                    super_admin_password = st.secrets.get("SUPER_ADMIN_PASSWORD", "default_pass")
+
+                    if admin_name == super_admin_username and admin_password == super_admin_password:
                         st.session_state.current_user = {'id': 999, 'name': 'Super Admin', 'institution': 'QuestVibe System', 'role': 'super_admin'}
                         st.rerun()
+                    else:
+                        st.error("❌ Invalid admin credentials.")
 
 def main():
     """Main application function"""
